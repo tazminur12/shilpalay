@@ -1,8 +1,8 @@
-import Hero from "./components/Hero";
-import CategoryGrid from "./components/CategoryGrid";
-import FeaturedCollections from "./components/FeaturedCollections";
-import WhatsNew from "./components/WhatsNew";
-import Newsletter from "./components/Newsletter";
+import Hero from "../components/Hero";
+import CategoryGrid from "../components/CategoryGrid";
+import FeaturedCollections from "../components/FeaturedCollections";
+import WhatsNew from "../components/WhatsNew";
+import Newsletter from "../components/Newsletter";
 import Image from "next/image";
 
 export default function Home() {

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Search, MapPin, User, Heart, ShoppingBag, MoreHorizontal } from 'lucide-react';
+import { Search, User, Heart, ShoppingBag, MoreHorizontal } from 'lucide-react';
 
 const Navbar = () => {
   const navLinks = [
@@ -44,21 +44,17 @@ const Navbar = () => {
             <div className="flex items-center justify-end space-x-6 ml-4">
                 {/* Search Bar */}
                 <div className="hidden lg:flex items-center border-b border-gray-400 pb-1 mr-2">
-                    <Search className="w-4 h-4 text-gray-600 mr-2" />
+                    <Search className="w-5 h-5 text-black mr-2 stroke-[1.5]" />
                     <input 
                         type="text" 
-                        placeholder="Search product" 
-                        className="outline-none text-sm text-gray-700 placeholder-gray-500 w-32 focus:w-48 transition-all bg-transparent"
+                        placeholder="Search products" 
+                        className="outline-none text-sm text-gray-700 placeholder-gray-500 w-32 bg-transparent"
                     />
                 </div>
 
-                {/* Currency/Region */}
-                <span className="text-sm font-medium text-gray-800 hidden sm:block">BGD</span>
-
                 {/* Icons */}
                 <div className="flex items-center space-x-4 sm:space-x-5 text-gray-800">
-                    <button className="hover:text-black transition-colors"><MapPin className="w-5 h-5 stroke-[1.5]" /></button>
-                    <button className="hover:text-black transition-colors"><User className="w-5 h-5 stroke-[1.5]" /></button>
+                    <Link href="/login" className="hover:text-black transition-colors"><User className="w-5 h-5 stroke-[1.5]" /></Link>
                     <button className="hover:text-black transition-colors"><Heart className="w-5 h-5 stroke-[1.5]" /></button>
                     <button className="hover:text-black transition-colors"><ShoppingBag className="w-5 h-5 stroke-[1.5]" /></button>
                     <button className="hover:text-black transition-colors"><MoreHorizontal className="w-5 h-5 stroke-[1.5]" /></button>
