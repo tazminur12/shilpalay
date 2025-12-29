@@ -26,6 +26,7 @@ export async function POST(req) {
       mobile,
       gender,
       password: hashedPassword,
+      role: 'customer', // Default role
     });
 
     await newUser.save();

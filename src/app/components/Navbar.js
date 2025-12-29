@@ -1,14 +1,36 @@
+"use client";
+
 import Link from 'next/link';
 import { Search, User, Heart, ShoppingBag, MoreHorizontal } from 'lucide-react';
+import { useSession, signOut } from 'next-auth/react';
+import { useState, useRef, useEffect } from 'react';
 
 const Navbar = () => {
+  const { data: session } = useSession();
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
   const navLinks = [
     "WOMEN", "MEN", "KIDS", "HOME DÉCOR", "JEWELLERY", 
     "SKIN & HAIR", "GIFTS & CRAFTS", "BRANDS", "WEDDING", "WINTER 25-26"
   ];
 
+  const toggleDropdown = () => setIsDropdownOpen(!isDropdownOpen);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   return (
-    <nav className="w-full bg-white border-b border-gray-100">
+    <nav className="w-full bg-white border-b border-gray-100 relative z-50">
       <div className="max-w-[1920px] mx-auto px-4 lg:px-8">
         <div className="flex items-center justify-between h-[88px]">
             {/* Logo Section - Trying to match the black square style */}
@@ -54,7 +76,35 @@ const Navbar = () => {
 
                 {/* Icons */}
                 <div className="flex items-center space-x-4 sm:space-x-5 text-gray-800">
-                    <Link href="/login" className="hover:text-black transition-colors"><User className="w-5 h-5 stroke-[1.5]" /></Link>
+                    {session ? (
+                        <div className="relative" ref={dropdownRef}>
+                            <button 
+                                onClick={toggleDropdown}
+                                className="hover:text-black transition-colors focus:outline-none flex items-center"
+                            >
+                                <User className="w-5 h-5 stroke-[1.5]" />
+                            </button>
+                            
+                            {isDropdownOpen && (
+                                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 border border-gray-100 z-50">
+                                    <Link 
+                                        href="/my-account" 
+                                        className="block px-4 py-2 text-sm text-[#f05a28] hover:bg-gray-50"
+                                    >
+                                        My Account
+                                    </Link>
+                                    <button 
+                                        onClick={() => signOut()}
+                                        className="block w-full text-left px-4 py-2 text-sm text-[#f05a28] hover:bg-gray-50"
+                                    >
+                                        Logout
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <Link href="/login" className="hover:text-black transition-colors"><User className="w-5 h-5 stroke-[1.5]" /></Link>
+                    )}
                     <button className="hover:text-black transition-colors"><Heart className="w-5 h-5 stroke-[1.5]" /></button>
                     <button className="hover:text-black transition-colors"><ShoppingBag className="w-5 h-5 stroke-[1.5]" /></button>
                     <button className="hover:text-black transition-colors"><MoreHorizontal className="w-5 h-5 stroke-[1.5]" /></button>
