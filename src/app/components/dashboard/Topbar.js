@@ -28,7 +28,7 @@ const Topbar = () => {
         <div className="flex items-center gap-3 pl-4 border-l border-gray-200">
           <div className="text-right hidden sm:block">
             <p className="text-sm font-semibold text-gray-800">{session?.user?.name || 'User'}</p>
-            <p className="text-xs text-gray-500 capitalize">{session?.user?.role || 'Role'}</p>
+            <p className="text-xs text-gray-500 capitalize">{session?.user?.role?.replace('_', ' ') || 'Role'}</p>
           </div>
           <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-gray-600">
             <User className="w-5 h-5" />

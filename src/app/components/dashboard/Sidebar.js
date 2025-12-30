@@ -12,7 +12,10 @@ import {
   LogOut,
   ChevronDown,
   ChevronRight,
-  ShieldCheck
+  ShieldCheck,
+  Layers,
+  List,
+  Grid
 } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 import { useState } from 'react';
@@ -32,6 +35,15 @@ const Sidebar = () => {
 
   const menuItems = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    { 
+      name: 'Category', 
+      href: '/dashboard/categories', 
+      icon: Layers,
+      submenu: [
+        { name: 'Category Management', href: '/dashboard/categories/category-list', icon: List },
+        { name: 'Sub Category', href: '/dashboard/categories/sub-categories', icon: Grid }
+      ]
+    },
     { name: 'Products', href: '/dashboard/products', icon: Package },
     { name: 'Orders', href: '/dashboard/orders', icon: ShoppingBag },
     { name: 'Customers', href: '/dashboard/customers', icon: Users },
