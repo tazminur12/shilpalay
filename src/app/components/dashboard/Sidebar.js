@@ -41,7 +41,8 @@ const Sidebar = () => {
       icon: Layers,
       submenu: [
         { name: 'Category Management', href: '/dashboard/categories/category-list', icon: List },
-        { name: 'Sub Category', href: '/dashboard/categories/sub-categories', icon: Grid }
+        { name: 'Sub Category', href: '/dashboard/categories/sub-categories', icon: Grid },
+        { name: 'Child Category', href: '/dashboard/categories/child-categories', icon: Layers }
       ]
     },
     { name: 'Products', href: '/dashboard/products', icon: Package },
