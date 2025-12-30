@@ -32,6 +32,7 @@ export async function GET() {
       });
 
       return {
+        _id: category._id,
         name: category.name,
         slug: category.slug,
         sections: sections
