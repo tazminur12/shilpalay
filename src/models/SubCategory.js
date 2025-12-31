@@ -15,6 +15,10 @@ const SubCategorySchema = new mongoose.Schema({
     required: [true, 'Please provide a slug'],
     unique: true,
   },
+  image: {
+    type: String,
+    default: '',
+  },
   status: {
     type: String,
     enum: ['Active', 'Inactive'],

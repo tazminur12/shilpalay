@@ -2,10 +2,18 @@ import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import SubCategory from '@/models/SubCategory';
 
-export async function GET() {
+export async function GET(req) {
   try {
     await connectDB();
-    const subCategories = await SubCategory.find().populate('category', 'name').sort({ createdAt: -1 });
+    const { searchParams } = new URL(req.url);
+    const category = searchParams.get('category');
+    
+    let query = {};
+    if (category) {
+      query.category = category;
+    }
+    
+    const subCategories = await SubCategory.find(query).populate('category', 'name').sort({ createdAt: -1 });
     return NextResponse.json(subCategories);
   } catch (error) {
     return NextResponse.json(

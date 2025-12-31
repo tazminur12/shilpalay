@@ -15,7 +15,8 @@ import {
   ShieldCheck,
   Layers,
   List,
-  Grid
+  Grid,
+  FileText
 } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 import { useState } from 'react';
@@ -46,6 +47,7 @@ const Sidebar = () => {
       ]
     },
     { name: 'Products', href: '/dashboard/products', icon: Package },
+    { name: 'Page Content', href: '/dashboard/page-content', icon: FileText },
     { name: 'Orders', href: '/dashboard/orders', icon: ShoppingBag },
     { name: 'Customers', href: '/dashboard/customers', icon: Users },
     { name: 'Logistics', href: '/dashboard/logistics', icon: Truck },
