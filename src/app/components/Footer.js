@@ -21,7 +21,7 @@ const Footer = () => {
       title: "Customer Service",
       links: [
         "Contact Us", "Return & Exchanges", "How To Order", "Fabric Care",
-        "Billing & Payments", "My Aarong Rewards", "Shipping & Delivery",
+        "Billing & Payments", "My Shilpalay Rewards", "Shipping & Delivery",
         "Club Taaga", "Track Your Orders", "FAQ"
       ]
     },
