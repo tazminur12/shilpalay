@@ -41,10 +41,10 @@ const Navbar = () => {
   const toggleDropdown = () => setIsDropdownOpen(!isDropdownOpen);
 
   return (
-    <nav className="w-full bg-white border-b border-gray-200 sticky top-0 z-50">
+    <nav className="w-full bg-white border-b border-gray-50 sticky top-0 z-50">
       {/* --- TOP ROW: Logo & Actions --- */}
-      <div className="max-w-[1920px] mx-auto px-4 lg:px-10 border-b border-gray-50">
-        <div className="flex items-center justify-between h-[65px] lg:h-[90px]">
+      <div className="max-w-[1920px] mx-auto px-4 lg:px-10">
+        <div className="flex items-center justify-between">
           
           {/* Mobile Menu Button */}
           <button className="lg:hidden p-2 -ml-2" onClick={() => setIsMobileMenuOpen(true)}>
@@ -53,12 +53,12 @@ const Navbar = () => {
 
           {/* Logo Section */}
           <Link href="/" className="flex-shrink-0">
-            <div className="bg-black text-[#e5c100] p-2 w-[60px] h-[60px] lg:w-[85px] lg:h-[85px] flex flex-col items-center justify-center">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="lg:w-9 lg:h-9 mb-0.5">
+            <div className="bg-black text-[#e5c100] p-2 w-[55px] h-[55px] lg:w-[75px] lg:h-[75px] flex flex-col items-center justify-center">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="lg:w-8 lg:h-8 mb-0.5">
                 <path d="M12 2L14.5 9H22L16 13.5L18.5 21L12 16.5L5.5 21L8 13.5L2 9H9.5L12 2Z" />
               </svg>
-              <span className="text-[7px] lg:text-[10px] font-bold tracking-tighter uppercase leading-none">SHILPALAY</span>
-              <span className="text-[7px] lg:text-[10px] leading-none">শিল্পালয়</span>
+              <span className="text-[7px] lg:text-[9px] font-bold tracking-tighter uppercase leading-none">SHILPALAY</span>
+              <span className="text-[7px] lg:text-[9px] leading-none">শিল্পালয়</span>
             </div>
           </Link>
 
@@ -121,12 +121,12 @@ const Navbar = () => {
 
       {/* --- BOTTOM ROW: Category Menu (Desktop) --- */}
       <div className="hidden lg:block bg-white max-w-[1920px] mx-auto px-10">
-        <div className="flex items-center justify-start space-x-10 h-[50px]">
+        <div className="flex items-center justify-start space-x-10 h-[40px] pl-[95px]">
           {navData.map((category) => (
             <div key={category._id} className="relative group h-full flex items-center">
               <Link 
                 href={`/category/${category.slug}`}
-                className="text-[12px] font-bold text-gray-900 uppercase tracking-[0.15em] hover:text-[#f05a28] transition-colors border-b-2 border-transparent hover:border-black h-full flex items-center"
+                className="text-[12px] text-gray-900 uppercase tracking-[0.15em] hover:text-[#f05a28] transition-colors border-b-2 border-transparent hover:border-black h-full flex items-center"
               >
                 {category.name}
               </Link>
