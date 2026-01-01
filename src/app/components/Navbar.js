@@ -1,17 +1,18 @@
 "use client";
 
 import Link from 'next/link';
-import { Search, User, Heart, ShoppingBag, MoreHorizontal, ChevronDown } from 'lucide-react';
+import { Search, User, Heart, ShoppingBag, MoreHorizontal, Menu, X, MapPin, ChevronRight } from 'lucide-react';
 import { useSession, signOut } from 'next-auth/react';
 import { useState, useRef, useEffect } from 'react';
 
 const Navbar = () => {
   const { data: session } = useSession();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [navData, setNavData] = useState([]);
-  const [hoveredCategory, setHoveredCategory] = useState(null);
   const dropdownRef = useRef(null);
 
+  // ডাটা ফেচ করা
   const fetchNavigation = async () => {
     try {
       const res = await fetch('/api/navigation');
@@ -26,8 +27,7 @@ const Navbar = () => {
     fetchNavigation();
   }, []);
 
-  const toggleDropdown = () => setIsDropdownOpen(!isDropdownOpen);
-
+  // ড্রপডাউনের বাইরে ক্লিক করলে বন্ধ হওয়া
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -35,130 +35,134 @@ const Navbar = () => {
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const toggleDropdown = () => setIsDropdownOpen(!isDropdownOpen);
+
   return (
-    <nav className="w-full bg-white border-b border-gray-100 relative z-50">
-      <div className="max-w-[1920px] mx-auto px-4 lg:px-8">
-        <div className="flex items-center justify-between h-[88px]">
-            {/* Logo Section */}
-            <div className="flex-shrink-0 flex items-center">
-                <Link href="/" className="bg-black text-[#e5c100] flex flex-col items-center justify-center w-[88px] h-[88px] p-2">
-                    <div className="mb-1">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor" className="text-[#e5c100]">
-                            <path d="M12 2L14.5 9H22L16 13.5L18.5 21L12 16.5L5.5 21L8 13.5L2 9H9.5L12 2Z" />
-                        </svg>
-                    </div>
-                    <span className="font-serif text-[10px] font-bold tracking-widest uppercase leading-tight">SHILPALAY</span>
-                    <span className="font-serif text-[10px] leading-tight">শিল্পালয়</span>
-                </Link>
+    <nav className="w-full bg-white border-b border-gray-200 sticky top-0 z-50">
+      {/* --- TOP ROW: Logo & Actions --- */}
+      <div className="max-w-[1920px] mx-auto px-4 lg:px-10 border-b border-gray-50">
+        <div className="flex items-center justify-between h-[65px] lg:h-[90px]">
+          
+          {/* Mobile Menu Button */}
+          <button className="lg:hidden p-2 -ml-2" onClick={() => setIsMobileMenuOpen(true)}>
+            <Menu className="w-6 h-6" />
+          </button>
+
+          {/* Logo Section */}
+          <Link href="/" className="flex-shrink-0">
+            <div className="bg-black text-[#e5c100] p-2 w-[60px] h-[60px] lg:w-[85px] lg:h-[85px] flex flex-col items-center justify-center">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="lg:w-9 lg:h-9 mb-0.5">
+                <path d="M12 2L14.5 9H22L16 13.5L18.5 21L12 16.5L5.5 21L8 13.5L2 9H9.5L12 2Z" />
+              </svg>
+              <span className="text-[7px] lg:text-[10px] font-bold tracking-tighter uppercase leading-none">SHILPALAY</span>
+              <span className="text-[7px] lg:text-[10px] leading-none">শিল্পালয়</span>
+            </div>
+          </Link>
+
+          {/* Right Side Tools */}
+          <div className="flex items-center space-x-2 sm:space-x-6">
+            {/* Search Bar (Desktop) */}
+            <div className="hidden md:flex items-center border-b border-black pb-1 px-1 mr-4">
+              <Search className="w-5 h-5 text-black mr-2 stroke-[1.5]" />
+              <input 
+                type="text" 
+                placeholder="Search products" 
+                className="outline-none text-[13px] text-gray-700 placeholder-gray-500 w-32 lg:w-48 bg-transparent"
+              />
             </div>
 
-            {/* Navigation Links with Mega Menu */}
-            <div className="hidden xl:flex items-center justify-center flex-1 px-8 h-full">
-                <div className="flex h-full">
-                    {navData.map((category) => (
-                        <div 
-                            key={category._id} 
-                            className="relative group h-full flex items-center"
-                            onMouseEnter={() => setHoveredCategory(category.name)}
-                            onMouseLeave={() => setHoveredCategory(null)}
+            {/* Actions Icons */}
+            <div className="flex items-center space-x-3 lg:space-x-5 text-gray-800">
+              
+              {/* User Account / Login Logic */}
+              <div className="relative" ref={dropdownRef}>
+                {session ? (
+                  <>
+                    <button 
+                      onClick={toggleDropdown}
+                      className="hover:text-black transition-colors focus:outline-none flex items-center"
+                    >
+                      <User className="w-5 h-5 stroke-[1.2]" />
+                    </button>
+                    {isDropdownOpen && (
+                      <div className="absolute right-0 mt-3 w-48 bg-white rounded-md shadow-xl py-2 border border-gray-100 z-50">
+                        <Link href="/my-account" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">My Account</Link>
+                        <Link href="/dashboard" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Dashboard</Link>
+                        <hr className="my-1 border-gray-100" />
+                        <button 
+                          onClick={() => signOut()}
+                          className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50"
                         >
-                            <Link 
-                                href={`/category/${category.slug}`}
-                                className={`text-gray-800 hover:text-[#e5c100] px-4 2xl:px-5 text-[13px] font-medium tracking-wide whitespace-nowrap uppercase h-full flex items-center border-b-2 border-transparent hover:border-[#e5c100] transition-colors ${hoveredCategory === category.name ? 'text-[#e5c100] border-[#e5c100]' : ''}`}
-                            >
-                                {category.name}
-                            </Link>
-
-                            {/* Mega Menu */}
-                            {category.sections && category.sections.length > 0 && (
-                                <div className="absolute top-[88px] left-0 w-[80vw] max-w-[1200px] bg-white shadow-xl border-t border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 -translate-x-[20%]">
-                                    <div className="p-8 grid grid-cols-4 gap-8">
-                                        {category.sections.map((section, idx) => (
-                                            <div key={`${category._id}-section-${idx}`} className="space-y-4">
-                                                <h3 className="font-bold text-sm uppercase tracking-wider text-black border-b border-gray-100 pb-2">
-                                                    {section.title}
-                                                </h3>
-                                                <ul className="space-y-2">
-                                                    {section.items.map((item, i) => (
-                                                        <li key={`${category._id}-item-${i}`}>
-                                                            <Link 
-                                                                href={`/category/${category.slug}/${item.slug}`}
-                                                                className="text-gray-500 hover:text-[#e5c100] text-sm transition-colors block"
-                                                            >
-                                                                {item.label}
-                                                            </Link>
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    ))}
-                </div>
-            </div>
-
-            {/* Right Side Actions */}
-            <div className="flex items-center justify-end space-x-6 ml-4">
-                {/* Search Bar */}
-                <div className="hidden lg:flex items-center border-b border-gray-400 pb-1 mr-2">
-                    <Search className="w-5 h-5 text-black mr-2 stroke-[1.5]" />
-                    <input 
-                        type="text" 
-                        placeholder="Search products" 
-                        className="outline-none text-sm text-gray-700 placeholder-gray-500 w-32 bg-transparent"
-                    />
-                </div>
-
-                {/* Icons */}
-                <div className="flex items-center space-x-4 sm:space-x-5 text-gray-800">
-                    {session ? (
-                        <div className="relative" ref={dropdownRef}>
-                            <button 
-                                onClick={toggleDropdown}
-                                className="hover:text-black transition-colors focus:outline-none flex items-center"
-                            >
-                                <User className="w-5 h-5 stroke-[1.5]" />
-                            </button>
-                            
-                            {isDropdownOpen && (
-                                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 border border-gray-100 z-50">
-                                    <Link 
-                                        href="/my-account" 
-                                        className="block px-4 py-2 text-sm text-[#f05a28] hover:bg-gray-50"
-                                    >
-                                        My Account
-                                    </Link>
-                                    <Link 
-                                        href="/dashboard" 
-                                        className="block px-4 py-2 text-sm text-[#f05a28] hover:bg-gray-50"
-                                    >
-                                        Dashboard
-                                    </Link>
-                                    <button 
-                                        onClick={() => signOut()}
-                                        className="block w-full text-left px-4 py-2 text-sm text-[#f05a28] hover:bg-gray-50"
-                                    >
-                                        Logout
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    ) : (
-                        <Link href="/login" className="hover:text-black transition-colors"><User className="w-5 h-5 stroke-[1.5]" /></Link>
+                          Logout
+                        </button>
+                      </div>
                     )}
-                    <button className="hover:text-black transition-colors"><Heart className="w-5 h-5 stroke-[1.5]" /></button>
-                    <button className="hover:text-black transition-colors"><ShoppingBag className="w-5 h-5 stroke-[1.5]" /></button>
-                    <button className="hover:text-black transition-colors"><MoreHorizontal className="w-5 h-5 stroke-[1.5]" /></button>
-                </div>
+                  </>
+                ) : (
+                  <Link href="/login" className="hover:text-black transition-colors">
+                    <User className="w-5 h-5 stroke-[1.2]" />
+                  </Link>
+                )}
+              </div>
+
+              <button className="hidden sm:block"><Heart className="w-5 h-5 stroke-[1.2]" /></button>
+              <button className="relative">
+                <ShoppingBag className="w-5 h-5 stroke-[1.2]" />
+                <span className="absolute -top-1.5 -right-1.5 bg-[#f05a28] text-white text-[9px] rounded-full w-4 h-4 flex items-center justify-center">0</span>
+              </button>
+              <button className="hidden sm:block"><MoreHorizontal className="w-5 h-5 stroke-[1.2]" /></button>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* --- BOTTOM ROW: Category Menu (Desktop) --- */}
+      <div className="hidden lg:block bg-white max-w-[1920px] mx-auto px-10">
+        <div className="flex items-center justify-start space-x-10 h-[50px]">
+          {navData.map((category) => (
+            <div key={category._id} className="relative group h-full flex items-center">
+              <Link 
+                href={`/category/${category.slug}`}
+                className="text-[12px] font-bold text-gray-900 uppercase tracking-[0.15em] hover:text-[#f05a28] transition-colors border-b-2 border-transparent hover:border-black h-full flex items-center"
+              >
+                {category.name}
+              </Link>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* --- MOBILE SIDEBAR --- */}
+      <div 
+        className={`fixed inset-0 bg-black/40 z-[100] lg:hidden transition-opacity duration-300 ${isMobileMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`} 
+        onClick={() => setIsMobileMenuOpen(false)} 
+      />
+      
+      <div className={`fixed top-0 left-0 w-[80%] max-w-[300px] h-full bg-white z-[101] shadow-2xl lg:hidden transform transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className="flex items-center justify-between p-5 border-b">
+          <span className="font-bold text-xs tracking-[0.2em]">MENU</span>
+          <button onClick={() => setIsMobileMenuOpen(false)}><X className="w-6 h-6" /></button>
+        </div>
+        <div className="overflow-y-auto h-[calc(100vh-70px)]">
+          {navData.map((category) => (
+            <Link 
+              key={category._id}
+              href={`/category/${category.slug}`}
+              className="flex items-center justify-between p-4 text-sm font-bold border-b border-gray-50 text-gray-800 uppercase tracking-widest"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              {category.name}
+              <ChevronRight className="w-4 h-4 text-gray-400" />
+            </Link>
+          ))}
+          {/* Mobile Extra Links */}
+          <div className="p-4 bg-gray-50 space-y-4">
+            <Link href="/track-order" className="block text-xs font-medium text-gray-600 uppercase">Track Order</Link>
+            <Link href="/stores" className="block text-xs font-medium text-gray-600 uppercase">Our Stores</Link>
+          </div>
         </div>
       </div>
     </nav>
