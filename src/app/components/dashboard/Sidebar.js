@@ -16,7 +16,8 @@ import {
   Layers,
   List,
   Grid,
-  FileText
+  FileText,
+  Image
 } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 import { useState } from 'react';
@@ -47,6 +48,7 @@ const Sidebar = () => {
       ]
     },
     { name: 'Products', href: '/dashboard/products', icon: Package },
+    { name: 'Banners', href: '/dashboard/banners', icon: Image },
     { name: 'Page Content', href: '/dashboard/page-content', icon: FileText },
     { name: 'Orders', href: '/dashboard/orders', icon: ShoppingBag },
     { name: 'Customers', href: '/dashboard/customers', icon: Users },
