@@ -65,7 +65,7 @@ const Sidebar = () => {
     <div className="w-64 bg-black text-white h-screen flex flex-col fixed left-0 top-0 overflow-hidden">
       {/* Logo */}
       <div className="h-16 flex items-center justify-center border-b border-gray-800 flex-shrink-0">
-        <Link href="/dashboard" className="flex items-center gap-2">
+        <Link href="/" className="flex items-center gap-2">
             <span className="font-serif text-lg font-bold tracking-widest uppercase text-[#e5c100]">SHILPALAY</span>
         </Link>
       </div>

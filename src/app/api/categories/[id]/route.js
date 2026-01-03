@@ -5,12 +5,16 @@ import Category from '@/models/Category';
 export async function PUT(req, { params }) {
   try {
     const { id } = await params;
-    const { name, slug, status } = await req.json();
+    const { name, slug, status, image, sortOrder } = await req.json();
     await connectDB();
+
+    const updateData = { name, slug, status };
+    if (image !== undefined) updateData.image = image;
+    if (sortOrder !== undefined) updateData.sortOrder = sortOrder;
 
     const category = await Category.findByIdAndUpdate(
       id,
-      { name, slug, status },
+      updateData,
       { new: true }
     );
 

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Search, User, Heart, ShoppingBag, MoreHorizontal, Menu, X, MapPin } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
@@ -69,22 +70,14 @@ const Navbar = () => {
           {/* ১. লোগো সেকশন - উচ্চতা কমিয়ে ছোট করা হয়েছে */}
           <div className="flex-shrink-0 mr-8 lg:mr-10">
             <Link href="/">
-              <div className="bg-black flex flex-col items-center justify-center w-[60px] h-[50px] lg:w-[80px] lg:h-[90px] shadow-sm">
-                <svg width="26" height="26" viewBox="0 0 100 100" className="text-[#f58220] lg:w-9 lg:h-9">
-                   <circle cx="50" cy="50" r="10" fill="currentColor" />
-                   <circle cx="50" cy="20" r="6" fill="currentColor" />
-                   <circle cx="80" cy="50" r="6" fill="currentColor" />
-                   <circle cx="50" cy="80" r="6" fill="currentColor" />
-                   <circle cx="20" cy="50" r="6" fill="currentColor" />
-                   <circle cx="71" cy="29" r="6" fill="currentColor" />
-                   <circle cx="71" cy="71" r="6" fill="currentColor" />
-                   <circle cx="29" cy="71" r="6" fill="currentColor" />
-                   <circle cx="29" cy="29" r="6" fill="currentColor" />
-                </svg>
-                <div className="text-white text-center mt-1">
-                  <span className="block text-[8px] lg:text-[10px] font-bold tracking-[0.05em] leading-none uppercase">SHILPALAY</span>
-                  <span className="block text-[9px] lg:text-[11px] leading-none mt-1 font-normal">শিল্পালয়</span>
-                </div>
+              <div className="relative w-[60px] h-[50px] lg:w-[80px] lg:h-[90px]">
+                <Image
+                  src="/logo/logo.png"
+                  alt="Shilpalay Logo"
+                  fill
+                  className="object-contain"
+                  priority
+                />
               </div>
             </Link>
           </div>

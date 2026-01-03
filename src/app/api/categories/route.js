@@ -5,7 +5,7 @@ import Category from '@/models/Category';
 export async function GET() {
   try {
     await connectDB();
-    const categories = await Category.find().sort({ createdAt: -1 });
+    const categories = await Category.find().sort({ sortOrder: 1, createdAt: -1 });
     return NextResponse.json(categories);
   } catch (error) {
     return NextResponse.json(
@@ -17,10 +17,16 @@ export async function GET() {
 
 export async function POST(req) {
   try {
-    const { name, slug, status } = await req.json();
+    const { name, slug, status, image, sortOrder } = await req.json();
     await connectDB();
 
-    const category = new Category({ name, slug, status });
+    const category = new Category({ 
+      name, 
+      slug, 
+      status, 
+      image: image || '',
+      sortOrder: sortOrder || 0
+    });
     await category.save();
 
     return NextResponse.json(category, { status: 201 });

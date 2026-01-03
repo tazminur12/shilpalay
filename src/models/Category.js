@@ -23,6 +23,10 @@ const CategorySchema = new mongoose.Schema({
     enum: ['Active', 'Inactive'],
     default: 'Active',
   },
+  sortOrder: {
+    type: Number,
+    default: 0,
+  },
 }, { timestamps: true });
 
 export default mongoose.models.Category || mongoose.model('Category', CategorySchema);
