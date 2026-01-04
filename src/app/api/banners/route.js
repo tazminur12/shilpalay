@@ -21,7 +21,7 @@ export async function POST(req) {
     await connectDB();
 
     const banner = new Banner({ 
-      title, 
+      title: title || '', 
       image, 
       link: link || '',
       status: status || 'Active',
@@ -33,7 +33,7 @@ export async function POST(req) {
     return NextResponse.json(banner, { status: 201 });
   } catch (error) {
     return NextResponse.json(
-      { message: 'Failed to create banner' },
+      { message: 'Failed to create banner', error: error.message },
       { status: 500 }
     );
   }

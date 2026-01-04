@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 const BannerSchema = new mongoose.Schema({
   title: {
     type: String,
-    required: [true, 'Please provide a banner title'],
+    default: '',
   },
   image: {
     type: String,
@@ -24,7 +24,7 @@ const BannerSchema = new mongoose.Schema({
   },
   position: {
     type: String,
-    enum: ['Homepage Hero', 'Homepage Banner', 'Category Banner', 'Sidebar'],
+    enum: ['Homepage Hero', 'Homepage Banner', 'Featured Banner', 'Featured Collection', 'Category Banner', 'Sidebar'],
     default: 'Homepage Banner',
   },
 }, { timestamps: true });

@@ -8,7 +8,14 @@ export async function PUT(req, { params }) {
     const { title, image, link, status, sortOrder, position } = await req.json();
     await connectDB();
 
-    const updateData = { title, image, link, status, sortOrder, position };
+    const updateData = { 
+      title: title || '', 
+      image, 
+      link: link || '', 
+      status, 
+      sortOrder, 
+      position 
+    };
 
     const banner = await Banner.findByIdAndUpdate(
       id,
@@ -26,7 +33,7 @@ export async function PUT(req, { params }) {
     return NextResponse.json(banner);
   } catch (error) {
     return NextResponse.json(
-      { message: 'Failed to update banner' },
+      { message: 'Failed to update banner', error: error.message },
       { status: 500 }
     );
   }
