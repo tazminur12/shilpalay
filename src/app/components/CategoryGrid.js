@@ -17,9 +17,9 @@ const CategoryGrid = () => {
       const res = await fetch('/api/categories');
       if (res.ok) {
         const data = await res.json();
-        // Filter only active categories and sort by sortOrder
+        // Filter only active categories with sortOrder 1-8 and sort by sortOrder
         const activeCategories = data
-          .filter(cat => cat.status === 'Active')
+          .filter(cat => cat.status === 'Active' && cat.sortOrder >= 1 && cat.sortOrder <= 8)
           .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
         setCategories(activeCategories);
       }
