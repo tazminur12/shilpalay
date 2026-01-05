@@ -3,13 +3,14 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Search, User, Heart, ShoppingBag, Menu, X, MapPin, ChevronDown, ChevronRight } from 'lucide-react';
+import { Search, User, Heart, ShoppingBag, Menu, X, MapPin, ChevronDown, ChevronRight, MoreVertical } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 
 const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const [navigation, setNavigation] = useState([]);
   const [hoveredCategory, setHoveredCategory] = useState(null);
   const [expandedCategories, setExpandedCategories] = useState({});
@@ -18,6 +19,7 @@ const Navbar = () => {
   const router = useRouter();
   const userMenuRef = useRef(null);
   const categoryMenuRef = useRef(null);
+  const moreMenuRef = useRef(null);
 
   const toggleCategory = (categoryId) => {
     setExpandedCategories(prev => ({
@@ -53,6 +55,9 @@ const Navbar = () => {
       }
       if (categoryMenuRef.current && !categoryMenuRef.current.contains(event.target)) {
         setHoveredCategory(null);
+      }
+      if (moreMenuRef.current && !moreMenuRef.current.contains(event.target)) {
+        setIsMoreMenuOpen(false);
       }
     };
 
@@ -97,14 +102,163 @@ const Navbar = () => {
               <div className="hidden lg:flex items-center space-x-8 font-normal">
               </div>
 
-              {/* Search Bar */}
-              <div className="hidden md:flex items-center border-b border-gray-300 pb-0.5 mr-2">
-                <Search className="w-4 h-4 text-gray-500 mr-2" />
-                <input 
-                  type="text" 
-                  placeholder="Search product" 
-                  className="outline-none text-[12px] w-28 lg:w-40 bg-transparent placeholder-gray-400 font-normal"
-                />
+              {/* Search Bar and Icons in same line */}
+              <div className="hidden md:flex items-center space-x-4 lg:space-x-5">
+                {/* Search Bar */}
+                <div className="flex items-center border-b border-gray-300 pb-0.5 mr-2">
+                  <Search className="w-4 h-4 text-gray-500 mr-2" />
+                  <input 
+                    type="text" 
+                    placeholder="Search product" 
+                    className="outline-none text-[12px] w-28 lg:w-40 bg-transparent placeholder-gray-400 font-normal"
+                  />
+                </div>
+
+                {/* User, Heart, ShoppingBag Icons */}
+                <div className="flex items-center space-x-4 lg:space-x-5 text-gray-700">
+                  {/* User Menu with Dropdown */}
+                  <div className="relative" ref={userMenuRef}>
+                    <button
+                      onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                      className="cursor-pointer"
+                    >
+                      <User className="w-5 lg:w-6 h-5 lg:h-6 stroke-[1.5]" />
+                    </button>
+                    {isUserMenuOpen && (
+                      <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50">
+                        {session ? (
+                          <>
+                            {(session.user?.role === 'admin' || session.user?.role === 'super_admin') && (
+                              <Link
+                                href="/dashboard"
+                                onClick={() => setIsUserMenuOpen(false)}
+                                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                              >
+                                Dashboard
+                              </Link>
+                            )}
+                            <Link
+                              href="/my-account"
+                              onClick={() => setIsUserMenuOpen(false)}
+                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                            >
+                              My Account
+                            </Link>
+                            <button
+                              onClick={handleLogout}
+                              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                            >
+                              Log Out
+                            </button>
+                          </>
+                        ) : (
+                          <Link
+                            href="/login"
+                            onClick={() => setIsUserMenuOpen(false)}
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                          >
+                            Log In
+                          </Link>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  <Heart className="w-5 lg:w-6 h-5 lg:h-6 stroke-[1.5] cursor-pointer" />
+                  <button className="relative">
+                    <ShoppingBag className="w-5 lg:w-6 h-5 lg:h-6 stroke-[1.5]" />
+                    <span className="absolute -top-1 -right-1 bg-black text-white text-[8px] rounded-full w-4 h-4 lg:w-4 lg:h-4 flex items-center justify-center font-normal">0</span>
+                  </button>
+                  {/* 3 Dot Icon for Desktop with Dropdown */}
+                  <div className="relative" ref={moreMenuRef}>
+                    <button
+                      onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
+                      className="cursor-pointer"
+                    >
+                      <MoreVertical className="w-5 lg:w-6 h-5 lg:h-6 stroke-[1.5]" />
+                    </button>
+                    {isMoreMenuOpen && (
+                      <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg border border-gray-200 py-2 z-50">
+                        <Link
+                          href="/about-us"
+                          onClick={() => setIsMoreMenuOpen(false)}
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                        >
+                          About Us
+                        </Link>
+                        <Link
+                          href="/careers"
+                          onClick={() => setIsMoreMenuOpen(false)}
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                        >
+                          Careers
+                        </Link>
+                        <Link
+                          href="/find-a-store"
+                          onClick={() => setIsMoreMenuOpen(false)}
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                        >
+                          Find a Store
+                        </Link>
+                        <Link
+                          href="/customer-service"
+                          onClick={() => setIsMoreMenuOpen(false)}
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                        >
+                          Customer Service
+                        </Link>
+                        <Link
+                          href="/my-shilpalay-rewards"
+                          onClick={() => setIsMoreMenuOpen(false)}
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                        >
+                          My Shilpalay Rewards
+                        </Link>
+                        <Link
+                          href="/lookbook"
+                          onClick={() => setIsMoreMenuOpen(false)}
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                        >
+                          Lookbook
+                        </Link>
+                        <Link
+                          href="/photos-videos"
+                          onClick={() => setIsMoreMenuOpen(false)}
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                        >
+                          Photos & Videos
+                        </Link>
+                        <Link
+                          href="/latest-offers"
+                          onClick={() => setIsMoreMenuOpen(false)}
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                        >
+                          Latest Offers
+                        </Link>
+                        <Link
+                          href="/news-events"
+                          onClick={() => setIsMoreMenuOpen(false)}
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                        >
+                          News & Events
+                        </Link>
+                        <Link
+                          href="/stories"
+                          onClick={() => setIsMoreMenuOpen(false)}
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                        >
+                          Stories
+                        </Link>
+                        <Link
+                          href="/terms-conditions"
+                          onClick={() => setIsMoreMenuOpen(false)}
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                        >
+                          Terms & Conditions
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -163,22 +317,41 @@ const Navbar = () => {
             </div>
           </div>
 
-          {/* রাইট সাইড আইকন এবং মোবাইল মেনু */}
-          <div className="flex items-center space-x-4 lg:space-x-5 ml-auto">
-            {/* User, Heart, ShoppingBag Icons */}
-            <div className="flex items-center space-x-4 lg:space-x-5 text-gray-700">
+          {/* Mobile Search Bar, Icons and Menu Button */}
+          <div className="flex items-center space-x-3 ml-auto">
+            {/* Mobile Search Bar */}
+            <div className="md:hidden flex items-center border-b border-gray-300 pb-0.5">
+              <Search className="w-4 h-4 text-gray-500 mr-2" />
+              <input 
+                type="text" 
+                placeholder="Search product" 
+                className="outline-none text-[12px] w-24 bg-transparent placeholder-gray-400 font-normal"
+              />
+            </div>
+            
+            {/* Mobile Icons - User, Heart, ShoppingBag */}
+            <div className="md:hidden flex items-center space-x-3 text-gray-700">
               {/* User Menu with Dropdown */}
               <div className="relative" ref={userMenuRef}>
                 <button
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                   className="cursor-pointer"
                 >
-                  <User className="w-5 lg:w-6 h-5 lg:h-6 stroke-[1.5]" />
+                  <User className="w-5 h-5 stroke-[1.5]" />
                 </button>
                 {isUserMenuOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50">
                     {session ? (
                       <>
+                        {(session.user?.role === 'admin' || session.user?.role === 'super_admin') && (
+                          <Link
+                            href="/dashboard"
+                            onClick={() => setIsUserMenuOpen(false)}
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                          >
+                            Dashboard
+                          </Link>
+                        )}
                         <Link
                           href="/my-account"
                           onClick={() => setIsUserMenuOpen(false)}
@@ -205,14 +378,14 @@ const Navbar = () => {
                   </div>
                 )}
               </div>
-              <Heart className="w-5 lg:w-6 h-5 lg:h-6 stroke-[1.5] cursor-pointer" />
+              <Heart className="w-5 h-5 stroke-[1.5] cursor-pointer" />
               <button className="relative">
-                <ShoppingBag className="w-5 lg:w-6 h-5 lg:h-6 stroke-[1.5]" />
-                <span className="absolute -top-1 -right-1 bg-black text-white text-[8px] rounded-full w-4 h-4 lg:w-4 lg:h-4 flex items-center justify-center font-normal">0</span>
+                <ShoppingBag className="w-5 h-5 stroke-[1.5]" />
+                <span className="absolute -top-1 -right-1 bg-black text-white text-[8px] rounded-full w-4 h-4 flex items-center justify-center font-normal">0</span>
               </button>
             </div>
             
-            {/* মোবাইল মেনু বাটন */}
+            {/* Mobile Menu Button */}
             <button className="lg:hidden p-2" onClick={() => setIsMobileMenuOpen(true)}>
               <Menu className="w-6 h-6 text-gray-800" />
             </button>
