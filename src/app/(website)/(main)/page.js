@@ -8,7 +8,7 @@ import FeaturedBanners from "../../components/FeaturedBanners";
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-white overflow-x-hidden">
       <Hero />
       <div className="py-2 md:py-3">
         <CategoryGrid />
@@ -23,11 +23,9 @@ export default function Home() {
       <div className="py-2 md:py-3">
         <HomepageBanner />
       </div>
-
-      <div className="py-2 md:py-3">
-        <FeaturedBanners />
-      </div>
-
+      
+      <FeaturedBanners />
+      
       <div className="py-2 md:py-3">
         <Newsletter />
       </div>

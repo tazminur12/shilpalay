@@ -34,11 +34,11 @@ const FeaturedBanners = () => {
 
   if (loading) {
     return (
-      <section className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
-        <div className="relative aspect-square md:h-[70vh] bg-gray-100 flex items-center justify-center w-full">
+      <section className="w-screen relative left-1/2 -translate-x-1/2 flex flex-col md:flex-row">
+        <div className="relative aspect-square md:h-[70vh] bg-gray-100 flex items-center justify-center w-full md:flex-1 md:mr-2">
           <div className="text-gray-400">Loading...</div>
         </div>
-        <div className="relative aspect-square md:h-[70vh] bg-gray-100 flex items-center justify-center w-full">
+        <div className="relative aspect-square md:h-[70vh] bg-gray-100 flex items-center justify-center w-full md:flex-1">
           <div className="text-gray-400">Loading...</div>
         </div>
       </section>
@@ -50,9 +50,9 @@ const FeaturedBanners = () => {
   }
 
   return (
-    <section className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
+    <section className="w-screen relative left-1/2 -translate-x-1/2 flex flex-col md:flex-row">
       {banners.map((banner, index) => (
-        <div key={banner._id || index} className="relative aspect-square md:h-[70vh] group overflow-hidden w-full">
+        <div key={banner._id || index} className={`relative aspect-square md:h-[70vh] md:flex-1 group overflow-hidden w-full ${index === 0 ? 'md:mr-2' : ''}`}>
           {banner.image ? (
             <Image 
               src={banner.image}

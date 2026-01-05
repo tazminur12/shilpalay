@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Search, User, Heart, ShoppingBag, Menu, X, MapPin, ChevronDown, ChevronRight, MoreVertical } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { useSession, signOut } from 'next-auth/react';
+import Swal from 'sweetalert2';
 
 const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -125,13 +126,23 @@ const Navbar = () => {
                       <User className="w-5 lg:w-6 h-5 lg:h-6 stroke-[1.5]" />
                     </button>
                     {isUserMenuOpen && (
-                      <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50">
+                      <div 
+                        className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50"
+                        onMouseDown={(e) => e.stopPropagation()}
+                      >
                         {session ? (
                           <>
                             {(session.user?.role === 'admin' || session.user?.role === 'super_admin') && (
                               <Link
                                 href="/dashboard"
-                                onClick={() => setIsUserMenuOpen(false)}
+                                onMouseDown={(e) => {
+                                  e.stopPropagation();
+                                  console.log('Desktop Dashboard mousedown');
+                                }}
+                                onClick={(e) => {
+                                  console.log('Desktop Dashboard clicked');
+                                  setIsUserMenuOpen(false);
+                                }}
                                 className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                               >
                                 Dashboard
@@ -139,13 +150,24 @@ const Navbar = () => {
                             )}
                             <Link
                               href="/my-account"
-                              onClick={() => setIsUserMenuOpen(false)}
+                              onMouseDown={(e) => {
+                                e.stopPropagation();
+                                console.log('Desktop My Account mousedown');
+                              }}
+                              onClick={(e) => {
+                                console.log('Desktop My Account clicked');
+                                setIsUserMenuOpen(false);
+                              }}
                               className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                             >
                               My Account
                             </Link>
                             <button
-                              onClick={handleLogout}
+                              onMouseDown={(e) => e.stopPropagation()}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                handleLogout();
+                              }}
                               className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                             >
                               Log Out
@@ -154,7 +176,14 @@ const Navbar = () => {
                         ) : (
                           <Link
                             href="/login"
-                            onClick={() => setIsUserMenuOpen(false)}
+                            onMouseDown={(e) => {
+                              e.stopPropagation();
+                              console.log('Desktop Login mousedown');
+                            }}
+                            onClick={(e) => {
+                              console.log('Desktop Login clicked');
+                              setIsUserMenuOpen(false);
+                            }}
                             className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                           >
                             Log In
@@ -177,7 +206,10 @@ const Navbar = () => {
                       <MoreVertical className="w-5 lg:w-6 h-5 lg:h-6 stroke-[1.5]" />
                     </button>
                     {isMoreMenuOpen && (
-                      <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg border border-gray-200 py-2 z-50">
+                      <div 
+                        className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg border border-gray-200 py-2 z-50"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <Link
                           href="/about-us"
                           onClick={() => setIsMoreMenuOpen(false)}
@@ -340,13 +372,19 @@ const Navbar = () => {
                   <User className="w-5 h-5 stroke-[1.5]" />
                 </button>
                 {isUserMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50">
+                  <div 
+                    className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50"
+                    onMouseDown={(e) => e.stopPropagation()}
+                  >
                     {session ? (
                       <>
                         {(session.user?.role === 'admin' || session.user?.role === 'super_admin') && (
                           <Link
                             href="/dashboard"
-                            onClick={() => setIsUserMenuOpen(false)}
+                            onClick={() => {
+                              console.log('Mobile Dashboard clicked');
+                              setIsUserMenuOpen(false);
+                            }}
                             className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                           >
                             Dashboard
@@ -354,13 +392,19 @@ const Navbar = () => {
                         )}
                         <Link
                           href="/my-account"
-                          onClick={() => setIsUserMenuOpen(false)}
+                          onClick={() => {
+                            console.log('Mobile My Account clicked');
+                            setIsUserMenuOpen(false);
+                          }}
                           className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                         >
                           My Account
                         </Link>
                         <button
-                          onClick={handleLogout}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleLogout();
+                          }}
                           className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                         >
                           Log Out
@@ -369,7 +413,10 @@ const Navbar = () => {
                     ) : (
                       <Link
                         href="/login"
-                        onClick={() => setIsUserMenuOpen(false)}
+                        onClick={() => {
+                          console.log('Mobile Login clicked');
+                          setIsUserMenuOpen(false);
+                        }}
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                       >
                         Log In
