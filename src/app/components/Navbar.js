@@ -11,6 +11,7 @@ const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [navigation, setNavigation] = useState([]);
   const [hoveredCategory, setHoveredCategory] = useState(null);
   const [expandedCategories, setExpandedCategories] = useState({});
@@ -44,6 +45,16 @@ const Navbar = () => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Mobile search input ref
+  const mobileSearchRef = useRef(null);
+  
+  // Mobile search open হলে input focus
+  useEffect(() => {
+    if (isMobileSearchOpen && mobileSearchRef.current) {
+      mobileSearchRef.current.focus();
+    }
+  }, [isMobileSearchOpen]);
 
   // ৩. নেভিগেশন হ্যান্ডলার (সংশোধিত)
   const handleNavigation = (path) => {
@@ -177,9 +188,68 @@ const Navbar = () => {
 
               {/* Mobile Area */}
               <div className="md:hidden flex items-center space-x-3 ml-auto">
-                <Search className="w-4 h-4 text-gray-500" />
-                <button onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}><User className="w-5 h-5" /></button>
-                <button className="p-2" onClick={() => setIsMobileMenuOpen(true)}><Menu className="w-6 h-6 text-gray-800" /></button>
+                <button onClick={() => setIsMobileSearchOpen(true)} className="p-1">
+                  <Search className="w-5 h-5 text-gray-700" />
+                </button>
+                
+                <button onClick={() => handleNavigation('/wishlist')} className="p-1 relative">
+                  <Heart className="w-5 h-5 text-gray-700" />
+                </button>
+                
+                <button onClick={() => handleNavigation('/cart')} className="p-1 relative">
+                  <ShoppingBag className="w-5 h-5 text-gray-700" />
+                  <span className="absolute top-0 right-0 bg-black text-white text-[8px] rounded-full w-4 h-4 flex items-center justify-center">0</span>
+                </button>
+                
+                {/* Mobile User Menu */}
+                <div className="relative" ref={userMenuRef}>
+                  <button 
+                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                    className="p-1"
+                  >
+                    <User className="w-5 h-5 text-gray-700" />
+                  </button>
+                  
+                  {isUserMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-xl border border-gray-100 py-2 z-[999]">
+                      {session ? (
+                        <>
+                          {(session.user?.role === 'admin' || session.user?.role === 'super_admin') && (
+                            <button
+                              onClick={() => handleNavigation('/dashboard')}
+                              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors"
+                            >
+                              Dashboard
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleNavigation('/my-account')}
+                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors"
+                          >
+                            My Account
+                          </button>
+                          <button
+                            onClick={handleLogout}
+                            className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                          >
+                            Log Out
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          onClick={() => handleNavigation('/login')}
+                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors"
+                        >
+                          Log In / Register
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+                
+                <button className="p-2" onClick={() => setIsMobileMenuOpen(true)}>
+                  <Menu className="w-6 h-6 text-gray-800" />
+                </button>
               </div>
             </div>
 
@@ -239,6 +309,44 @@ const Navbar = () => {
           </div>
         </div>
       </div>
+
+      {/* Mobile Search Modal */}
+      {isMobileSearchOpen && (
+        <div 
+          className="fixed inset-0 bg-black/40 z-[9999] transition-opacity duration-300"
+          onClick={() => setIsMobileSearchOpen(false)}
+        >
+          <div 
+            className="bg-white p-4 mx-4 mt-20 rounded-lg shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center border-b border-gray-300 pb-2 mb-3">
+              <Search className="w-5 h-5 text-gray-500 mr-3" />
+              <input 
+                ref={mobileSearchRef}
+                type="text" 
+                placeholder="Search product" 
+                className="flex-1 outline-none text-sm bg-transparent"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    // Handle search
+                    setIsMobileSearchOpen(false);
+                  }
+                }}
+              />
+              <button 
+                onClick={() => setIsMobileSearchOpen(false)}
+                className="ml-2 p-1"
+              >
+                <X className="w-5 h-5 text-gray-600" />
+              </button>
+            </div>
+            <div className="text-xs text-gray-500 text-center py-2">
+              Type and press Enter to search
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Mobile Sidebar Menu */}
       {isMobileMenuOpen && (
