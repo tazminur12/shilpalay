@@ -14,15 +14,15 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div>
+    <div className="w-full min-w-0 max-w-full overflow-x-hidden">
       <h1 className="text-2xl font-bold text-gray-800 mb-6">Dashboard Overview</h1>
       
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-8 w-full min-w-0">
         {stats.map((stat) => {
           const Icon = stat.icon;
           return (
-            <div key={stat.name} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <div key={stat.name} className="bg-white p-4 lg:p-6 rounded-xl shadow-sm border border-gray-100 w-full min-w-0">
               <div className="flex items-center justify-between mb-4">
                 <div className={`p-3 rounded-lg ${stat.color}`}>
                   <Icon className="w-6 h-6" />
@@ -39,7 +39,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Recent Activity Placeholder */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full min-w-0">
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-80">
           <h3 className="text-lg font-bold text-gray-800 mb-4">Revenue Analytics</h3>
           <div className="flex items-center justify-center h-full text-gray-400">

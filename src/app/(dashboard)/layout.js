@@ -43,7 +43,7 @@ export default function DashboardLayout({ children }) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
       {/* Mobile Overlay */}
       {isSidebarOpen && (
         <div 
@@ -63,9 +63,9 @@ export default function DashboardLayout({ children }) {
       </aside>
       
       {/* Main Content */}
-      <div className="flex flex-col min-w-0 w-full lg:ml-64">
+      <div className="flex flex-col min-w-0 w-full lg:ml-64 lg:max-w-[calc(100%-256px)]">
         <Topbar onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
-        <main className="flex-1 p-4 lg:p-6">
+        <main className="flex-1 p-4 lg:p-6 min-w-0 max-w-full">
           {children}
         </main>
       </div>
