@@ -17,12 +17,13 @@ import {
   List,
   Grid,
   FileText,
-  Image
+  Image,
+  X
 } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 import { useState } from 'react';
 
-const Sidebar = () => {
+const Sidebar = ({ onClose = () => {} }) => {
   const pathname = usePathname();
   const [openSubmenus, setOpenSubmenus] = useState({
     Settings: true // Open settings by default
@@ -64,12 +65,19 @@ const Sidebar = () => {
   ];
 
   return (
-    <div className="w-64 bg-black text-white h-screen flex flex-col fixed left-0 top-0 overflow-hidden">
-      {/* Logo */}
-      <div className="h-16 flex items-center justify-center border-b border-gray-800 flex-shrink-0">
-        <Link href="/" className="flex items-center gap-2">
+    <div className="w-64 bg-black text-white h-screen lg:h-screen flex flex-col overflow-hidden">
+      {/* Logo & Close Button */}
+      <div className="h-16 flex items-center justify-between px-4 border-b border-gray-800 flex-shrink-0">
+        <Link href="/" className="flex items-center gap-2" onClick={onClose}>
             <span className="font-serif text-lg font-bold tracking-widest uppercase text-[#e5c100]">SHILPALAY</span>
         </Link>
+        {/* Mobile Close Button */}
+        <button 
+          onClick={onClose}
+          className="lg:hidden text-gray-400 hover:text-white p-1"
+        >
+          <X className="w-5 h-5" />
+        </button>
       </div>
 
       {/* Menu */}
@@ -100,6 +108,7 @@ const Sidebar = () => {
                 ) : (
                     <Link
                         href={item.href}
+                        onClick={onClose}
                         className={`flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
                             isActive 
                             ? 'bg-[#e5c100] text-black' 
@@ -121,6 +130,7 @@ const Sidebar = () => {
                                 <Link
                                     key={subItem.name}
                                     href={subItem.href}
+                                    onClick={onClose}
                                     className={`flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                                         isSubActive 
                                         ? 'text-[#e5c100]' 

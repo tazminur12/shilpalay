@@ -4,11 +4,12 @@ import Sidebar from "../components/dashboard/Sidebar";
 import Topbar from "../components/dashboard/Topbar";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export default function DashboardLayout({ children }) {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
     if (status === "loading") return; // Still loading
@@ -42,11 +43,29 @@ export default function DashboardLayout({ children }) {
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <Sidebar />
-      <div className="flex-1 ml-64 flex flex-col">
-        <Topbar />
-        <main className="flex-1 p-6 overflow-y-auto">
+    <div className="min-h-screen bg-gray-50">
+      {/* Mobile Overlay */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+      
+      {/* Sidebar */}
+      <aside className={`
+        fixed lg:fixed inset-y-0 left-0 z-50 lg:z-30
+        transform transition-transform duration-300 ease-in-out lg:transform-none
+        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        shrink-0
+      `}>
+        <Sidebar onClose={() => setIsSidebarOpen(false)} />
+      </aside>
+      
+      {/* Main Content */}
+      <div className="flex flex-col min-w-0 w-full lg:ml-64">
+        <Topbar onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
+        <main className="flex-1 p-4 lg:p-6">
           {children}
         </main>
       </div>
