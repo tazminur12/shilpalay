@@ -85,7 +85,7 @@ export default function CheckoutPage() {
     return subtotal + shipping + vat;
   };
 
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = async () => {
     // Validation
     if (!shippingAddress.firstName || !shippingAddress.lastName || !shippingAddress.mobile) {
       Swal.fire('Required Fields', 'Please fill in all required fields', 'warning');
@@ -102,7 +102,6 @@ export default function CheckoutPage() {
       return;
     }
 
-    // TODO: Implement order placement API
     Swal.fire({
       title: 'Processing Order...',
       text: 'Please wait while we process your order',
@@ -112,20 +111,91 @@ export default function CheckoutPage() {
       }
     });
 
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      // Calculate order totals
+      const subtotal = calculateSubtotal();
+      const shipping = getShippingCost();
+      const vat = calculateVAT();
+      const total = calculateTotal();
+
+      // Create order object
+      const order = {
+        _id: `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        orderNumber: `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
+        customer: session?.user ? {
+          _id: session.user.id,
+          name: session.user.name,
+          email: session.user.email
+        } : null,
+        items: cartItems.map(item => ({
+          _id: item._id,
+          name: item.name,
+          slug: item.slug,
+          price: item.price,
+          quantity: item.quantity || 1,
+          selectedVariation: item.selectedVariation,
+          images: item.images
+        })),
+        shippingAddress: {
+          ...shippingAddress,
+          email: session?.user?.email || shippingAddress.email
+        },
+        billingAddress: sameAsShipping ? {
+          ...shippingAddress,
+          email: session?.user?.email || shippingAddress.email
+        } : null,
+        subtotal: subtotal,
+        shippingCost: shipping,
+        vat: vat,
+        discount: 0,
+        total: total,
+        shippingMethod: shippingMethod,
+        paymentMethod: paymentMethod,
+        paymentStatus: paymentMethod === 'cod' ? 'pending' : 'paid',
+        status: 'pending',
+        deliveryInstructions: deliveryInstructions,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      // API call to save order and decrease stock
+      const res = await fetch('/api/admin/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(order)
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || 'Failed to place order');
+      }
+
+      const result = await res.json();
+      
+      // Also save to localStorage for demo purposes
+      const existingOrders = localStorage.getItem('orders');
+      const orders = existingOrders ? JSON.parse(existingOrders) : [];
+      orders.push(result.order || order);
+      localStorage.setItem('orders', JSON.stringify(orders));
+
+      // Clear cart
+      localStorage.removeItem('cart');
+      window.dispatchEvent(new CustomEvent('cartUpdated'));
+      
+      // Dispatch order update event
+      window.dispatchEvent(new CustomEvent('orderUpdated'));
+
       Swal.fire({
         icon: 'success',
         title: 'Order Placed!',
-        text: 'Your order has been placed successfully',
+        text: `Order #${order.orderNumber} has been placed successfully`,
         confirmButtonText: 'View Orders'
       }).then(() => {
-        // Clear cart and redirect
-        localStorage.removeItem('cart');
-        window.dispatchEvent(new CustomEvent('cartUpdated'));
-        router.push('/my-account');
+        router.push('/dashboard/orders');
       });
-    }, 2000);
+    } catch (error) {
+      Swal.fire('Error', 'Failed to place order. Please try again.', 'error');
+    }
   };
 
   if (loading) {
@@ -393,22 +463,7 @@ export default function CheckoutPage() {
                       className="w-4 h-4 border-gray-300"
                     />
                     <CreditCard className="w-5 h-5 text-gray-600" />
-                    <span className="text-sm text-gray-900">Debit/Credit cards and mobile money</span>
-                  </label>
-
-                  <label className="flex items-center gap-3 cursor-pointer p-4 border border-gray-200 rounded hover:border-black transition-colors">
-                    <input
-                      type="radio"
-                      name="payment"
-                      value="bkash"
-                      checked={paymentMethod === 'bkash'}
-                      onChange={(e) => setPaymentMethod(e.target.value)}
-                      className="w-4 h-4 border-gray-300"
-                    />
-                    <div className="w-12 h-8 bg-[#E2136E] rounded flex items-center justify-center text-white text-xs font-bold">
-                      bKash
-                    </div>
-                    <span className="text-sm text-gray-900">bKash</span>
+                    <span className="text-sm text-gray-900">Debit/Credit cards and Mobile Banking</span>
                   </label>
 
                   <label className="flex items-center gap-3 cursor-pointer p-4 border border-gray-200 rounded hover:border-black transition-colors">

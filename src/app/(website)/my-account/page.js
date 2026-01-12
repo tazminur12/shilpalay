@@ -11,12 +11,11 @@ export default function MyAccount() {
   const menuItems = [
     { name: "Account Information", href: "/my-account/account-info" },
     { name: "Address Book", href: "/my-account/address-book" },
-    { name: "Order History", href: "#" },
-    { name: "Rewards", href: "#" },
+    { name: "Order History", href: "/my-account/order-history" },
     { name: "Recommendations", href: "/my-account" },
     { name: "Wishlist", href: "/my-account/wishlist" },
     { name: "Credit Note", href: "#" },
-    { name: "Returns", href: "#" },
+    { name: "Returns", href: "/my-account/returns" },
     { name: "Remove Account", href: "#" }
   ];
 

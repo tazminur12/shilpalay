@@ -58,11 +58,29 @@ export default function ProductDetailPage({ params: routeParams }) {
   const handleAddToCart = () => {
     if (!product) return;
     
-    if (product.inventory?.availability === 'out_of_stock') {
-      Swal.fire('Out of Stock', 'This product is currently out of stock', 'warning');
+    const stock = product.inventory?.totalStock || 0;
+    const availability = product.inventory?.availability || 'in_stock';
+    
+    if (availability === 'out_of_stock' || stock === 0) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Product Not Available',
+        text: 'This product is currently out of stock',
+        confirmButtonText: 'OK'
+      });
       return;
     }
-
+    
+    if (quantity > stock) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Insufficient Stock',
+        text: `Only ${stock} units available in stock`,
+        confirmButtonText: 'OK'
+      });
+      return;
+    }
+    
     const result = addToCart(product, quantity, selectedVariation);
     
     if (result.success) {
@@ -75,8 +93,20 @@ export default function ProductDetailPage({ params: routeParams }) {
         toast: true,
         position: 'top-end'
       });
+    } else if (result.error === 'insufficient_stock') {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Insufficient Stock',
+        text: result.message || 'Not enough stock available',
+        confirmButtonText: 'OK'
+      });
     } else {
-      Swal.fire('Error', 'Failed to add product to cart', 'error');
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: result.message || 'Failed to add product to cart',
+        confirmButtonText: 'OK'
+      });
     }
   };
 

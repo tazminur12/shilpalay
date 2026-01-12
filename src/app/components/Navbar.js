@@ -76,10 +76,14 @@ const Navbar = () => {
         const response = await fetch('/api/navigation');
         if (response.ok) {
           const data = await response.json();
-          setNavigation(data);
+          setNavigation(Array.isArray(data) ? data : []);
+        } else {
+          console.error('Failed to fetch navigation:', response.status, response.statusText);
+          setNavigation([]);
         }
       } catch (error) {
         console.error('Error fetching navigation:', error);
+        setNavigation([]);
       } finally {
         setLoadingCategories(false);
       }

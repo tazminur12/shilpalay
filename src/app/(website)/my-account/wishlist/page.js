@@ -113,12 +113,12 @@ export default function WishlistPage() {
   const menuItems = [
     { name: "Account Information", href: "/my-account/account-info" },
     { name: "Address Book", href: "/my-account/address-book" },
-    { name: "Order History", href: "#" },
+    { name: "Order History", href: "/my-account/order-history" },
     { name: "Rewards", href: "#" },
     { name: "Recommendations", href: "/my-account" },
     { name: "Wishlist", href: "/my-account/wishlist" },
     { name: "Credit Note", href: "#" },
-    { name: "Returns", href: "#" },
+    { name: "Returns", href: "/my-account/returns" },
     { name: "Remove Account", href: "#" }
   ];
 

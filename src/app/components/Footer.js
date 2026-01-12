@@ -117,7 +117,7 @@ const Footer = () => {
         {/* Copyright */}
         <div className="border-t border-gray-800 pt-8 text-center">
           <p className="text-xs text-gray-400">
-            Copyright © 2025 Shilpalay. All rights reserved.
+            Copyright © {new Date().getFullYear()} Shilpalay. All rights reserved.
           </p>
         </div>
       </div>

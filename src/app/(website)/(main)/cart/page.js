@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ShoppingBag, Plus, Minus, X, Trash2, ChevronDown } from 'lucide-react';
+import { ShoppingBag, Plus, Minus, X, Trash2, ChevronDown, Tag, Check } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Swal from 'sweetalert2';
@@ -16,6 +16,7 @@ export default function CartPage() {
   const [loading, setLoading] = useState(true);
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [applyingCoupon, setApplyingCoupon] = useState(false);
   const [vatRate] = useState(10); // 10% VAT
 
   const getShippingCost = () => {
@@ -67,7 +68,24 @@ export default function CartPage() {
       if (result.success) {
         setCartItems(result.cart.items || []);
       } else {
-        Swal.fire('Error', 'Failed to update quantity', 'error');
+        if (result.error === 'out_of_stock') {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Product Not Available',
+            text: result.message || 'This product is currently out of stock',
+            confirmButtonText: 'OK'
+          });
+        } else if (result.error === 'insufficient_stock') {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Insufficient Stock',
+            text: result.message || 'Not enough stock available',
+            confirmButtonText: 'OK'
+          });
+        } else {
+          Swal.fire('Error', result.message || 'Failed to update quantity', 'error');
+        }
+        fetchCart(); // Refresh cart to show correct quantity
       }
     } catch (error) {
       Swal.fire('Error', 'Failed to update quantity', 'error');
@@ -98,30 +116,67 @@ export default function CartPage() {
     }
   };
 
-  const applyCoupon = () => {
-    // TODO: Implement coupon validation API
-    if (couponCode.trim()) {
-      // Mock coupon validation
-      const mockCoupons = {
-        'SAVE10': { discount: 10, type: 'percentage' },
-        'FLAT50': { discount: 50, type: 'fixed' }
-      };
-      
-      const coupon = mockCoupons[couponCode.toUpperCase()];
-      if (coupon) {
-        setAppliedCoupon({ code: couponCode.toUpperCase(), ...coupon });
+  const applyCoupon = async () => {
+    if (!couponCode.trim()) {
+      Swal.fire('Error', 'Please enter a coupon code', 'error');
+      return;
+    }
+
+    if (appliedCoupon) {
+      Swal.fire('Info', 'Please remove the current coupon before applying a new one', 'info');
+      return;
+    }
+
+    setApplyingCoupon(true);
+    
+    try {
+      const subtotal = calculateSubtotal();
+      const res = await fetch('/api/coupons/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: couponCode.trim(),
+          subtotal: subtotal
+        })
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.valid) {
+        setAppliedCoupon({
+          code: data.coupon.code,
+          name: data.coupon.name,
+          discountType: data.coupon.discountType,
+          discountValue: data.coupon.discountValue,
+          discountAmount: data.coupon.discountAmount,
+          maxDiscountAmount: data.coupon.maxDiscountAmount
+        });
         Swal.fire({
           icon: 'success',
-          title: 'Coupon Applied',
-          text: `You saved ${coupon.type === 'percentage' ? coupon.discount + '%' : '৳' + coupon.discount}`,
-          timer: 1500,
+          title: 'Coupon Applied!',
+          text: data.coupon.description || `You saved Tk ${data.coupon.discountAmount.toFixed(2)}`,
+          timer: 2000,
           showConfirmButton: false,
           toast: true,
           position: 'top-end'
         });
+        setCouponCode('');
       } else {
-        Swal.fire('Invalid Coupon', 'Please enter a valid coupon code', 'error');
+        Swal.fire({
+          icon: 'error',
+          title: 'Invalid Coupon',
+          text: data.message || 'Please enter a valid coupon code',
+          timer: 2000,
+          showConfirmButton: false,
+          toast: true,
+          position: 'top-end'
+        });
       }
+    } catch (error) {
+      console.error('Error applying coupon:', error);
+      Swal.fire('Error', 'Failed to apply coupon. Please try again.', 'error');
+    } finally {
+      setApplyingCoupon(false);
     }
   };
 
@@ -139,11 +194,23 @@ export default function CartPage() {
 
   const calculateDiscount = () => {
     if (!appliedCoupon) return 0;
+    
+    // If discountAmount is already calculated, use it
+    if (appliedCoupon.discountAmount !== undefined) {
+      return appliedCoupon.discountAmount;
+    }
+    
+    // Fallback calculation
     const subtotal = calculateSubtotal();
-    if (appliedCoupon.type === 'percentage') {
-      return (subtotal * appliedCoupon.discount) / 100;
+    if (appliedCoupon.discountType === 'percent') {
+      let discount = (subtotal * appliedCoupon.discountValue) / 100;
+      // Apply max discount limit if set
+      if (appliedCoupon.maxDiscountAmount && discount > appliedCoupon.maxDiscountAmount) {
+        discount = appliedCoupon.maxDiscountAmount;
+      }
+      return discount;
     } else {
-      return Math.min(appliedCoupon.discount, subtotal);
+      return Math.min(appliedCoupon.discountValue, subtotal);
     }
   };
 
@@ -392,28 +459,63 @@ export default function CartPage() {
                   <div className="border border-gray-200 rounded p-4 bg-white">
                     <h2 className="text-base font-bold mb-4 uppercase tracking-wide">ORDER SUMMARY</h2>
                     
-                    {/* Apply Points/Credits/Gift Card */}
+                    {/* Promo Code Section */}
                     <div className="mb-4">
-                      <div className="relative">
-                        <input
-                          type="text"
-                          placeholder="Apply Points/Credits/Gift Card"
-                          value={couponCode}
-                          onChange={(e) => setCouponCode(e.target.value)}
-                          className="w-full pl-3 pr-8 py-2 border border-gray-300 rounded text-xs outline-none focus:border-black transition-colors"
-                        />
-                        <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                      </div>
-                      {appliedCoupon && (
-                        <div className="mt-2 flex items-center justify-between p-2 bg-green-50 border border-green-200 rounded text-xs">
-                          <span className="text-green-700 font-medium">{appliedCoupon.code}</span>
+                      <label className="block text-xs font-medium text-gray-700 mb-2">
+                        Promo Code
+                      </label>
+                      {!appliedCoupon ? (
+                        <div className="flex gap-2">
+                          <div className="relative flex-1">
+                            <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                            <input
+                              type="text"
+                              placeholder="Enter promo code"
+                              value={couponCode}
+                              onChange={(e) => setCouponCode(e.target.value)}
+                              onKeyPress={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  applyCoupon();
+                                }
+                              }}
+                              className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded text-xs outline-none focus:border-black transition-colors uppercase"
+                              disabled={applyingCoupon}
+                            />
+                          </div>
                           <button
-                            onClick={removeCoupon}
-                            className="text-red-600 hover:text-red-700"
-                            aria-label="Remove coupon"
+                            onClick={applyCoupon}
+                            disabled={applyingCoupon || !couponCode.trim()}
+                            className="px-4 py-2 bg-black text-white text-xs font-medium rounded hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
                           >
-                            <X className="w-3 h-3" />
+                            {applyingCoupon ? 'Applying...' : 'Apply'}
                           </button>
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-green-50 border border-green-200 rounded">
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center gap-2">
+                              <Check className="w-4 h-4 text-green-600" />
+                              <span className="text-xs font-semibold text-green-800">
+                                {appliedCoupon.code}
+                              </span>
+                            </div>
+                            <button
+                              onClick={removeCoupon}
+                              className="text-red-600 hover:text-red-700 transition-colors"
+                              aria-label="Remove coupon"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                          {appliedCoupon.name && (
+                            <p className="text-[10px] text-green-700 mt-1">
+                              {appliedCoupon.name}
+                            </p>
+                          )}
+                          <p className="text-xs font-medium text-green-800 mt-1">
+                            Discount: Tk {calculateDiscount().toFixed(2)}
+                          </p>
                         </div>
                       )}
                     </div>
@@ -424,6 +526,15 @@ export default function CartPage() {
                         <span className="text-gray-600">Subtotal</span>
                         <span className="font-medium">Tk {subtotal.toFixed(2)}</span>
                       </div>
+                      
+                      {discount > 0 && (
+                        <div className="flex justify-between text-xs">
+                          <span className="text-gray-600">Discount</span>
+                          <span className="font-medium text-green-600">
+                            -Tk {discount.toFixed(2)}
+                          </span>
+                        </div>
+                      )}
                       
                       <div className="flex justify-between text-xs">
                         <span className="text-gray-600">Shipping</span>

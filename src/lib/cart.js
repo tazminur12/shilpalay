@@ -2,6 +2,18 @@
 
 export const addToCart = (product, quantity = 1, selectedVariation = null) => {
   try {
+    // Check stock availability
+    const stock = product.inventory?.totalStock || 0;
+    const availability = product.inventory?.availability || 'in_stock';
+    
+    if (availability === 'out_of_stock' || stock === 0) {
+      return { 
+        success: false, 
+        error: 'out_of_stock',
+        message: 'This product is currently out of stock' 
+      };
+    }
+    
     const cartData = localStorage.getItem('cart');
     let cart = cartData ? JSON.parse(cartData) : { items: [] };
     
@@ -15,9 +27,26 @@ export const addToCart = (product, quantity = 1, selectedVariation = null) => {
       JSON.stringify(item.selectedVariation) === JSON.stringify(selectedVariation)
     );
 
+    let newQuantity;
     if (existingItemIndex > -1) {
       // Update quantity if item exists
-      cart.items[existingItemIndex].quantity += quantity;
+      newQuantity = cart.items[existingItemIndex].quantity + quantity;
+    } else {
+      newQuantity = quantity;
+    }
+    
+    // Check if requested quantity exceeds available stock
+    if (newQuantity > stock) {
+      return { 
+        success: false, 
+        error: 'insufficient_stock',
+        message: `Only ${stock} units available in stock`,
+        availableStock: stock
+      };
+    }
+
+    if (existingItemIndex > -1) {
+      cart.items[existingItemIndex].quantity = newQuantity;
     } else {
       // Add new item to cart
       const cartItem = {
@@ -103,6 +132,28 @@ export const updateCartQuantity = (productId, quantity, selectedVariation = null
       if (quantity <= 0) {
         cart.items.splice(itemIndex, 1);
       } else {
+        // Check stock availability before updating quantity
+        const item = cart.items[itemIndex];
+        const stock = item.inventory?.totalStock || 0;
+        const availability = item.inventory?.availability || 'in_stock';
+        
+        if (availability === 'out_of_stock' || stock === 0) {
+          return { 
+            success: false, 
+            error: 'out_of_stock',
+            message: 'This product is currently out of stock' 
+          };
+        }
+        
+        if (quantity > stock) {
+          return { 
+            success: false, 
+            error: 'insufficient_stock',
+            message: `Only ${stock} units available in stock`,
+            availableStock: stock
+          };
+        }
+        
         cart.items[itemIndex].quantity = quantity;
       }
     }

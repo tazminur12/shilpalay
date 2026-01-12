@@ -96,7 +96,7 @@ const Sidebar = ({ onClose = () => {} }) => {
         { name: 'Child Category', href: '/dashboard/categories/child-categories', icon: Layers }
       ]
     },
-    { name: 'Collections', href: '/dashboard/collections', icon: FolderTree },
+    // { name: 'Collections', href: '/dashboard/collections', icon: FolderTree },
     { name: 'Attributes', href: '/dashboard/attributes', icon: Tag },
     { name: 'Inventory', href: '/dashboard/inventory', icon: Box },
     { 
@@ -130,17 +130,17 @@ const Sidebar = ({ onClose = () => {} }) => {
         { name: 'Payment Methods', href: '/dashboard/payments/methods', icon: Wallet }
       ]
     },
-    { 
-      name: 'Shipping', 
-      href: '/dashboard/shipping', 
-      icon: Truck,
-      submenu: [
-        { name: 'Shipping Zones', href: '/dashboard/shipping/zones', icon: MapPin },
-        { name: 'Delivery Charges', href: '/dashboard/shipping/charges', icon: DollarSign },
-        { name: 'Courier Partners', href: '/dashboard/shipping/couriers', icon: Truck },
-        { name: 'Pickup Options', href: '/dashboard/shipping/pickup', icon: PackageCheck }
-      ]
-    },
+    // { 
+    //   name: 'Shipping', 
+    //   href: '/dashboard/shipping', 
+    //   icon: Truck,
+    //   submenu: [
+    //     { name: 'Shipping Zones', href: '/dashboard/shipping/zones', icon: MapPin },
+    //     { name: 'Delivery Charges', href: '/dashboard/shipping/charges', icon: DollarSign },
+    //     { name: 'Courier Partners', href: '/dashboard/shipping/couriers', icon: Truck },
+    //     { name: 'Pickup Options', href: '/dashboard/shipping/pickup', icon: PackageCheck }
+    //   ]
+    // },
     { 
       name: 'Offers & Campaigns', 
       href: '/dashboard/offers', 
