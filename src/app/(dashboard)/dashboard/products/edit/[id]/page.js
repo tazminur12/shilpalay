@@ -4,17 +4,21 @@ import { useState, useEffect, useRef } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Plus, X, Upload, Image as ImageIcon, ChevronDown, ChevronUp, Save } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import Swal from 'sweetalert2';
 import Image from 'next/image';
 import { productSchema } from '@/lib/validations/productSchema';
 
-export default function AddProductPage() {
+export default function EditProductPage() {
   const router = useRouter();
+  const params = useParams();
+  const productId = params.id;
+  
   const [categories, setCategories] = useState([]);
   const [subCategories, setSubCategories] = useState([]);
   const [childCategories, setChildCategories] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [seoExpanded, setSeoExpanded] = useState(false);
   const thumbnailInputRef = useRef(null);
@@ -26,11 +30,13 @@ export default function AddProductPage() {
     watch,
     setValue,
     control,
+    reset,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(productSchema),
     defaultValues: {
       name: '',
+      slug: '',
       sku: '',
       category: '',
       subCategory: null,
@@ -76,11 +82,8 @@ export default function AddProductPage() {
       flags: {
         featured: false,
         showOnHomepage: false,
-        trending: false,
-        recommended: false,
-        whatsNew: false,
       },
-      status: 'published',
+      status: 'draft',
     },
   });
 
@@ -97,16 +100,122 @@ export default function AddProductPage() {
   const watchedThumbnail = watch('images.thumbnail');
   const watchedGallery = watch('images.gallery');
 
-  // Auto-generate slug from name
+  // Fetch product data
   useEffect(() => {
-    if (watchedName) {
-      const slug = watchedName
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)/g, '');
-      setValue('slug', slug);
+    if (!productId) {
+      Swal.fire('Error', 'Product ID is missing', 'error');
+      router.push('/dashboard/products');
+      return;
     }
-  }, [watchedName, setValue]);
+
+    const fetchProduct = async () => {
+      setFetching(true);
+      try {
+        const res = await fetch(`/api/admin/products/${productId}`);
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({ message: 'Failed to fetch product' }));
+          throw new Error(errorData.message || 'Failed to fetch product');
+        }
+        const product = await res.json();
+        
+        if (!product || !product._id) {
+          throw new Error('Invalid product data received');
+        }
+
+        // Extract category IDs for form population and fetching sub/child categories
+        const categoryId = product.category?._id || product.category || '';
+        const subCategoryId = product.subCategory?._id || product.subCategory || null;
+        const childCategoryId = product.childCategory?._id || product.childCategory || null;
+        
+        // Convert to strings for form values
+        const categoryIdStr = categoryId ? (typeof categoryId === 'string' ? categoryId : categoryId.toString()) : '';
+        const subCategoryIdStr = subCategoryId ? (typeof subCategoryId === 'string' ? subCategoryId : subCategoryId.toString()) : null;
+        const childCategoryIdStr = childCategoryId ? (typeof childCategoryId === 'string' ? childCategoryId : childCategoryId.toString()) : null;
+
+        // Populate form with product data
+        reset({
+          name: product.name || '',
+          slug: product.slug || '',
+          sku: product.sku || '',
+          category: categoryIdStr,
+          subCategory: subCategoryIdStr,
+          childCategory: childCategoryIdStr,
+          collection: product.collection || '',
+          brand: product.brand || 'Own Brand',
+          price: {
+            regularPrice: product.price?.regularPrice || 0,
+            salePrice: product.price?.salePrice || null,
+            discountType: product.price?.discountType || 'percent',
+          },
+          variations: product.variations || [],
+          inventory: {
+            totalStock: product.inventory?.totalStock || 0,
+            lowStockAlert: product.inventory?.lowStockAlert || 10,
+            availability: product.inventory?.availability || 'in_stock',
+          },
+          images: {
+            thumbnail: product.images?.thumbnail || '',
+            gallery: product.images?.gallery || [],
+            video: product.images?.video || '',
+          },
+          description: {
+            shortDescription: product.description?.shortDescription || '',
+            fullDescription: product.description?.fullDescription || '',
+            fabric: product.description?.fabric || '',
+            workType: product.description?.workType || '',
+            fit: product.description?.fit || '',
+            washCare: product.description?.washCare || '',
+            origin: product.description?.origin || '',
+          },
+          shipping: {
+            weight: product.shipping?.weight || 0,
+            shippingClass: product.shipping?.shippingClass || 'standard',
+            estimatedDelivery: product.shipping?.estimatedDelivery || 7,
+          },
+          seo: {
+            metaTitle: product.seo?.metaTitle || '',
+            metaDescription: product.seo?.metaDescription || '',
+            keywords: product.seo?.keywords || [],
+          },
+          tags: product.tags || [],
+          flags: {
+            featured: product.flags?.featured || false,
+            showOnHomepage: product.flags?.showOnHomepage || false,
+            trending: product.flags?.trending || false,
+            recommended: product.flags?.recommended || false,
+            whatsNew: product.flags?.whatsNew || false,
+          },
+          status: product.status || 'draft',
+        });
+
+        // Fetch sub-categories and child-categories based on product data
+        if (categoryIdStr) {
+          fetch(`/api/sub-categories?category=${categoryIdStr}`)
+            .then(res => res.json())
+            .then(data => {
+              setSubCategories(data.filter(sub => sub.status === 'Active'));
+            })
+            .catch(err => console.error('Error fetching sub-categories:', err));
+        }
+
+        if (subCategoryIdStr) {
+          fetch(`/api/child-categories?subCategory=${subCategoryIdStr}`)
+            .then(res => res.json())
+            .then(data => {
+              setChildCategories(data.filter(child => child.status === 'Active'));
+            })
+            .catch(err => console.error('Error fetching child-categories:', err));
+        }
+      } catch (error) {
+        Swal.fire('Error', error.message || 'Failed to load product', 'error');
+        router.push('/dashboard/products');
+      } finally {
+        setFetching(false);
+      }
+    };
+
+    fetchProduct();
+  }, [productId, reset, router]);
 
   // Fetch categories
   useEffect(() => {
@@ -123,7 +232,10 @@ export default function AddProductPage() {
         .then(res => res.json())
         .then(data => {
           setSubCategories(data.filter(sub => sub.status === 'Active'));
-          setValue('subCategory', null);
+          // Don't reset subCategory if it's already set
+          if (!watch('subCategory')) {
+            setValue('subCategory', null);
+          }
           setValue('childCategory', null);
         })
         .catch(err => console.error('Error fetching sub-categories:', err));
@@ -131,7 +243,7 @@ export default function AddProductPage() {
       setSubCategories([]);
       setChildCategories([]);
     }
-  }, [watchedCategory, setValue]);
+  }, [watchedCategory, setValue, watch]);
 
   // Fetch child-categories when sub-category changes
   useEffect(() => {
@@ -140,13 +252,16 @@ export default function AddProductPage() {
         .then(res => res.json())
         .then(data => {
           setChildCategories(data.filter(child => child.status === 'Active'));
-          setValue('childCategory', null);
+          // Don't reset childCategory if it's already set
+          if (!watch('childCategory')) {
+            setValue('childCategory', null);
+          }
         })
         .catch(err => console.error('Error fetching child-categories:', err));
     } else {
       setChildCategories([]);
     }
-  }, [watchedSubCategory, setValue]);
+  }, [watchedSubCategory, setValue, watch]);
 
   const handleImageUpload = async (file, type) => {
     if (!file) return;
@@ -204,19 +319,18 @@ export default function AddProductPage() {
   const onSubmit = async (data) => {
     setLoading(true);
     try {
-      const res = await fetch('/api/admin/products', {
-        method: 'POST',
+      const res = await fetch(`/api/admin/products/${productId}`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
 
       if (res.ok) {
-        const product = await res.json();
-        Swal.fire('Success', 'Product created successfully', 'success');
+        Swal.fire('Success', 'Product updated successfully', 'success');
         router.push(`/dashboard/products`);
       } else {
         const error = await res.json();
-        throw new Error(error.message || 'Failed to create product');
+        throw new Error(error.message || 'Failed to update product');
       }
     } catch (error) {
       Swal.fire('Error', error.message, 'error');
@@ -225,12 +339,23 @@ export default function AddProductPage() {
     }
   };
 
+  if (fetching) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-6 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-black border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading product...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-800">Add New Product</h1>
-          <p className="text-sm text-gray-500 mt-1">Create a new product for your store</p>
+          <h1 className="text-2xl font-bold text-gray-800">Edit Product</h1>
+          <p className="text-sm text-gray-500 mt-1">Update product information</p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -564,6 +689,7 @@ export default function AddProductPage() {
                         type="text"
                         className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-black"
                         placeholder="keyword1, keyword2, keyword3"
+                        defaultValue={watch('seo.keywords')?.join(', ')}
                         onBlur={(e) => {
                           const keywords = e.target.value.split(',').map(k => k.trim()).filter(k => k);
                           setValue('seo.keywords', keywords);
@@ -837,12 +963,12 @@ export default function AddProductPage() {
               {loading ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  Saving...
+                  Updating...
                 </>
               ) : (
                 <>
                   <Save className="w-4 h-4" />
-                  Save Product
+                  Update Product
                 </>
               )}
             </button>

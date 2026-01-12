@@ -1,13 +1,13 @@
 import mongoose from 'mongoose';
 
 const VariationSchema = new mongoose.Schema({
-  color: { type: String, required: true },
+  color: { type: String, required: false },
   colorCode: { type: String, default: '' },
-  size: { type: String, required: true },
+  size: { type: String, required: false },
   material: { type: String, default: '' },
-  stock: { type: Number, required: true, default: 0 },
+  stock: { type: Number, required: false, default: 0 },
   priceOverride: { type: Number, default: null },
-  sku: { type: String, required: true },
+  sku: { type: String, required: false },
 }, { _id: true });
 
 const ProductSchema = new mongoose.Schema({
@@ -162,16 +162,28 @@ const ProductSchema = new mongoose.Schema({
     type: String,
     enum: ['Eid', 'New', 'Limited Edition', 'Sale', 'Featured'],
   }],
-  flags: {
-    featured: {
-      type: Boolean,
-      default: false,
-    },
-    showOnHomepage: {
-      type: Boolean,
-      default: false,
-    },
-  },
+      flags: {
+        featured: {
+          type: Boolean,
+          default: false,
+        },
+        showOnHomepage: {
+          type: Boolean,
+          default: false,
+        },
+        trending: {
+          type: Boolean,
+          default: false,
+        },
+        recommended: {
+          type: Boolean,
+          default: false,
+        },
+        whatsNew: {
+          type: Boolean,
+          default: false,
+        },
+      },
   status: {
     type: String,
     enum: ['draft', 'published', 'archived'],
@@ -180,23 +192,16 @@ const ProductSchema = new mongoose.Schema({
 }, {
   timestamps: true,
   strictPopulate: false,
-});
-
-// Auto-generate slug from name
-ProductSchema.pre('save', function(next) {
-  if (this.isModified('name') && !this.slug) {
-    this.slug = this.name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '');
-  }
-  next();
+  suppressReservedKeysWarning: true,
 });
 
 // Index for better query performance
-ProductSchema.index({ slug: 1 });
-ProductSchema.index({ sku: 1 });
 ProductSchema.index({ category: 1 });
 ProductSchema.index({ status: 1 });
 
-export default mongoose.models.Product || mongoose.model('Product', ProductSchema);
+// Delete the model from cache if it exists to force recompilation
+if (mongoose.models.Product) {
+  delete mongoose.models.Product;
+}
+
+export default mongoose.model('Product', ProductSchema);

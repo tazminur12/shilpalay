@@ -179,7 +179,7 @@ export default function ProductListPage() {
                           <Eye className="w-4 h-4" />
                         </button>
                         <button 
-                          onClick={() => router.push(`/dashboard/products/${product._id}/edit`)}
+                          onClick={() => router.push(`/dashboard/products/edit/${product._id}`)}
                           className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                           title="Edit"
                         >

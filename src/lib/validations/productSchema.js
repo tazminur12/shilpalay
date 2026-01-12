@@ -58,6 +58,9 @@ export const productSchema = z.object({
   flags: z.object({
     featured: z.boolean().optional(),
     showOnHomepage: z.boolean().optional(),
+    trending: z.boolean().optional(),
+    recommended: z.boolean().optional(),
+    whatsNew: z.boolean().optional(),
   }).optional(),
   status: z.enum(['draft', 'published', 'archived']).optional(),
 });

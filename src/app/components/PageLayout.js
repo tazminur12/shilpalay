@@ -5,6 +5,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import CategoryBanner from './CategoryBanner';
+import TrendingProducts from './TrendingProducts';
+import RecommendedProducts from './RecommendedProducts';
 
 const PageLayout = ({ pageContent, categoryId, categorySlug }) => {
   const [subCategories, setSubCategories] = useState([]);
@@ -103,14 +105,16 @@ const PageLayout = ({ pageContent, categoryId, categorySlug }) => {
           </h2>
           <div className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 ${categoryId ? 'xl:grid-cols-5' : 'xl:grid-cols-4'} gap-4 md:gap-6`}>
             {itemsToShow.map((item) => {
-              const linkHref = categoryId 
-                ? `/category/${categorySlug}/${item.slug}` 
-                : `/category/${item.slug}`;
+              // For homepage: link to main category products page
+              // For category pages: link to subcategory products page (using subcategory slug)
+              const categoryLinkHref = categoryId 
+                ? `/category/${item.slug}/products`  // Subcategory products page
+                : `/category/${item.slug}/products`;  // Main category products page
               
               return (
                 <Link
                   key={item._id}
-                  href={linkHref}
+                  href={categoryLinkHref}
                   className="group block text-center"
                 >
                   <div className="relative aspect-[3/4] overflow-hidden mb-4 rounded-lg shadow-sm">
@@ -183,57 +187,6 @@ const PageLayout = ({ pageContent, categoryId, categorySlug }) => {
     );
   };
 
-  // Recommended/Trending Products Section
-  const renderProductSection = (section, title) => {
-    if (!section || !section.enabled) return null;
-
-    // Placeholder products - will be replaced when Product model exists
-    const products = Array(3).fill(null).map((_, i) => ({
-      id: i,
-      image: `https://images.unsplash.com/photo-1503342394128-c104d54dba01?q=80&w=400&auto=format&fit=crop&random=${i}`,
-      name: `Product ${i + 1}`,
-    }));
-
-    return (
-      <section className="py-12 bg-white">
-        <div className="max-w-[1920px] mx-auto px-4 lg:px-8">
-          <h2 className="text-2xl font-bold text-center mb-10 uppercase tracking-wide">
-            {title || section.title}
-          </h2>
-          <div className="relative px-8">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {products.map((product) => (
-                <div key={product.id} className="group relative">
-                  <div className="aspect-[3/4] bg-gray-100 overflow-hidden relative">
-                    <Image
-                      src={product.image}
-                      alt={product.name}
-                      fill
-                      className="object-cover"
-                    />
-                    <button className="absolute bottom-4 left-4 w-8 h-8 bg-gray-500/50 hover:bg-black text-white rounded-full flex items-center justify-center transition-colors">
-                      <Plus className="w-5 h-5" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <button className="absolute left-0 top-1/2 -translate-y-1/2 p-1 hover:text-black text-gray-400 transition-colors">
-              <ChevronLeft className="w-8 h-8 stroke-[1.5]" />
-            </button>
-            <button className="absolute right-0 top-1/2 -translate-y-1/2 p-1 hover:text-black text-gray-400 transition-colors">
-              <ChevronRight className="w-8 h-8 stroke-[1.5]" />
-            </button>
-          </div>
-          <div className="flex justify-center mt-10">
-            <button className="bg-black text-white px-8 py-3 text-xs tracking-widest uppercase font-medium hover:bg-gray-800 transition-colors">
-              View More
-            </button>
-          </div>
-        </div>
-      </section>
-    );
-  };
 
   // Promotional Banner Section
   const renderPromoBanner = () => {
@@ -402,8 +355,8 @@ const PageLayout = ({ pageContent, categoryId, categorySlug }) => {
       {categoryId ? <CategoryBanner categoryId={categoryId} /> : renderHero()}
       {renderCategoryGrid()}
       {renderFeaturedCollections()}
-      {renderProductSection(recommended, recommended?.title)}
-      {renderProductSection(trending, trending?.title)}
+      <RecommendedProducts />
+      <TrendingProducts />
       {renderPromoBanner()}
       {renderTwoColumnBanners()}
       {renderNewsletter()}

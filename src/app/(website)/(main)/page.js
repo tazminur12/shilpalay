@@ -1,7 +1,7 @@
 import Hero from "../../components/Hero";
 import CategoryGrid from "../../components/CategoryGrid";
 import FeaturedCollections from "../../components/FeaturedCollections";
-import WhatsNew from "../../components/WhatsNew";
+import WhatsNewProducts from "../../components/WhatsNewProducts";
 import Newsletter from "../../components/Newsletter";
 import HomepageBanner from "../../components/HomepageBanner";
 import FeaturedBanners from "../../components/FeaturedBanners";
@@ -17,7 +17,7 @@ export default function Home() {
         <FeaturedCollections />
       </div>
       <div className="py-2 md:py-3">
-        <WhatsNew />
+        <WhatsNewProducts />
       </div>
       
       <div className="py-2 md:py-3">
