@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import CategoryBanner from './CategoryBanner';
 
 const PageLayout = ({ pageContent, categoryId, categorySlug }) => {
   const [subCategories, setSubCategories] = useState([]);
@@ -398,7 +399,7 @@ const PageLayout = ({ pageContent, categoryId, categorySlug }) => {
 
   return (
     <main className="min-h-screen bg-white">
-      {renderHero()}
+      {categoryId ? <CategoryBanner categoryId={categoryId} /> : renderHero()}
       {renderCategoryGrid()}
       {renderFeaturedCollections()}
       {renderProductSection(recommended, recommended?.title)}

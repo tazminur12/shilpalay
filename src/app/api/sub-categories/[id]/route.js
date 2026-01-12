@@ -5,12 +5,12 @@ import SubCategory from '@/models/SubCategory';
 export async function PUT(req, { params }) {
   try {
     const { id } = await params;
-    const { name, category, slug, status } = await req.json();
+    const { name, category, slug, status, image } = await req.json();
     await connectDB();
 
     const subCategory = await SubCategory.findByIdAndUpdate(
       id,
-      { name, category, slug, status },
+      { name, category, slug, status, image: image || '' },
       { new: true }
     );
 

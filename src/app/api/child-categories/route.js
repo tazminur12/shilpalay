@@ -2,10 +2,18 @@ import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import ChildCategory from '@/models/ChildCategory';
 
-export async function GET() {
+export async function GET(req) {
   try {
     await connectDB();
-    const childCategories = await ChildCategory.find()
+    const { searchParams } = new URL(req.url);
+    const subCategory = searchParams.get('subCategory');
+    
+    let query = {};
+    if (subCategory) {
+      query.subCategory = subCategory;
+    }
+    
+    const childCategories = await ChildCategory.find(query)
       .populate({
         path: 'subCategory',
         select: 'name category',

@@ -58,7 +58,7 @@ const DynamicCategoryPage = ({ params }) => {
   return (
     <PageLayout 
       pageContent={pageContent}
-      categoryId={category._id}
+      categoryId={category._id?.toString() || category._id}
       categorySlug={category.slug}
     />
   );

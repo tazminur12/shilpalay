@@ -25,10 +25,10 @@ export async function GET(req) {
 
 export async function POST(req) {
   try {
-    const { name, category, slug, status } = await req.json();
+    const { name, category, slug, status, image } = await req.json();
     await connectDB();
 
-    const subCategory = new SubCategory({ name, category, slug, status });
+    const subCategory = new SubCategory({ name, category, slug, status, image: image || '' });
     await subCategory.save();
 
     return NextResponse.json(subCategory, { status: 201 });

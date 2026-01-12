@@ -27,7 +27,20 @@ const BannerSchema = new mongoose.Schema({
     enum: ['Homepage Hero', 'Homepage Banner', 'Featured Banner', 'Featured Collection', 'Category Banner', 'Sidebar'],
     default: 'Homepage Banner',
   },
-}, { timestamps: true });
+  category: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Category',
+    default: null,
+  },
+}, { 
+  timestamps: true,
+  strictPopulate: false 
+});
 
-export default mongoose.models.Banner || mongoose.model('Banner', BannerSchema);
+// Delete the model from cache if it exists to force recompilation
+if (mongoose.models.Banner) {
+  delete mongoose.models.Banner;
+}
+
+export default mongoose.model('Banner', BannerSchema);
 

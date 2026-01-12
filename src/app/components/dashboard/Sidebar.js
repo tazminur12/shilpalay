@@ -18,7 +18,8 @@ import {
   Grid,
   FileText,
   Image,
-  X
+  X,
+  Plus
 } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 import { useState } from 'react';
@@ -48,7 +49,15 @@ const Sidebar = ({ onClose = () => {} }) => {
         { name: 'Child Category', href: '/dashboard/categories/child-categories', icon: Layers }
       ]
     },
-    { name: 'Products', href: '/dashboard/products', icon: Package },
+    { 
+      name: 'Products', 
+      href: '/dashboard/products', 
+      icon: Package,
+      submenu: [
+        { name: 'Product List', href: '/dashboard/products', icon: List },
+        { name: 'Add Product', href: '/dashboard/products/add', icon: Plus }
+      ]
+    },
     { name: 'Banners', href: '/dashboard/banners', icon: Image },
     { name: 'Page Content', href: '/dashboard/page-content', icon: FileText },
     { name: 'Orders', href: '/dashboard/orders', icon: ShoppingBag },
@@ -65,16 +74,16 @@ const Sidebar = ({ onClose = () => {} }) => {
   ];
 
   return (
-    <div className="w-64 bg-black text-white h-screen lg:h-screen flex flex-col overflow-hidden">
+    <div className="w-64 bg-white text-gray-900 h-screen lg:h-screen flex flex-col overflow-hidden border-r border-gray-200">
       {/* Logo & Close Button */}
-      <div className="h-16 flex items-center justify-between px-4 border-b border-gray-800 flex-shrink-0">
+      <div className="h-16 flex items-center justify-between px-4 border-b border-gray-200 flex-shrink-0">
         <Link href="/" className="flex items-center gap-2" onClick={onClose}>
             <span className="font-serif text-lg font-bold tracking-widest uppercase text-[#e5c100]">SHILPALAY</span>
         </Link>
         {/* Mobile Close Button */}
         <button 
           onClick={onClose}
-          className="lg:hidden text-gray-400 hover:text-white p-1"
+          className="lg:hidden text-gray-600 hover:text-gray-900 p-1"
         >
           <X className="w-5 h-5" />
         </button>
@@ -96,7 +105,7 @@ const Sidebar = ({ onClose = () => {} }) => {
                         className={`w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
                             isActive 
                             ? 'text-[#e5c100]' 
-                            : 'text-gray-400 hover:text-white hover:bg-gray-900'
+                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                         }`}
                     >
                         <div className="flex items-center gap-3">
@@ -112,7 +121,7 @@ const Sidebar = ({ onClose = () => {} }) => {
                         className={`flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
                             isActive 
                             ? 'bg-[#e5c100] text-black' 
-                            : 'text-gray-400 hover:text-white hover:bg-gray-900'
+                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                         }`}
                     >
                         <Icon className="w-5 h-5" />
@@ -122,7 +131,7 @@ const Sidebar = ({ onClose = () => {} }) => {
 
                 {/* Submenu */}
                 {hasSubmenu && isSubmenuOpen && (
-                    <div className="mt-1 ml-4 space-y-1 border-l border-gray-800 pl-4">
+                    <div className="mt-1 ml-4 space-y-1 border-l border-gray-200 pl-4">
                         {item.submenu.map((subItem) => {
                              const SubIcon = subItem.icon;
                              const isSubActive = pathname === subItem.href;
@@ -134,7 +143,7 @@ const Sidebar = ({ onClose = () => {} }) => {
                                     className={`flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                                         isSubActive 
                                         ? 'text-[#e5c100]' 
-                                        : 'text-gray-400 hover:text-white hover:bg-gray-900'
+                                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                                     }`}
                                 >
                                     {SubIcon && <SubIcon className="w-4 h-4" />}
@@ -150,10 +159,10 @@ const Sidebar = ({ onClose = () => {} }) => {
       </nav>
 
       {/* Logout */}
-      <div className="p-4 border-t border-gray-800 flex-shrink-0">
+      <div className="p-4 border-t border-gray-200 flex-shrink-0">
         <button 
           onClick={() => signOut({ callbackUrl: '/login' })}
-          className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-gray-900 w-full rounded-lg transition-colors"
+          className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 w-full rounded-lg transition-colors"
         >
           <LogOut className="w-5 h-5" />
           Logout
