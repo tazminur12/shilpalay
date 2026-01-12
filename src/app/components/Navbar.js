@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Search, User, Heart, ShoppingBag, Menu, X, ChevronDown, ChevronRight, MoreVertical } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { useSession, signOut } from 'next-auth/react';
+import { getCartCount } from '@/lib/cart';
 
 const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -16,6 +17,7 @@ const Navbar = () => {
   const [hoveredCategory, setHoveredCategory] = useState(null);
   const [expandedCategories, setExpandedCategories] = useState({});
   const [loadingCategories, setLoadingCategories] = useState(true);
+  const [cartCount, setCartCount] = useState(0);
   
   const { data: session } = useSession();
   const router = useRouter();
@@ -83,6 +85,23 @@ const Navbar = () => {
       }
     };
     fetchNavigation();
+  }, []);
+
+  // Cart count management
+  useEffect(() => {
+    const updateCartCount = () => {
+      setCartCount(getCartCount());
+    };
+
+    // Initial load
+    updateCartCount();
+
+    // Listen for cart updates
+    window.addEventListener('cartUpdated', updateCartCount);
+
+    return () => {
+      window.removeEventListener('cartUpdated', updateCartCount);
+    };
   }, []);
 
   return (
@@ -164,12 +183,16 @@ const Navbar = () => {
                     )}
                   </div>
 
-                  <Link href="/wishlist">
+                  <Link href="/my-account/wishlist">
                     <Heart className="w-5 lg:w-6 h-5 lg:h-6 cursor-pointer" />
                   </Link>
                   <Link href="/cart" className="relative">
                     <ShoppingBag className="w-5 lg:w-6 h-5 lg:h-6" />
-                    <span className="absolute -top-1 -right-1 bg-black text-white text-[8px] rounded-full w-4 h-4 flex items-center justify-center">0</span>
+                    {cartCount > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-black text-white text-[8px] rounded-full w-4 h-4 flex items-center justify-center">
+                        {cartCount > 99 ? '99+' : cartCount}
+                      </span>
+                    )}
                   </Link>
                   
                   {/* 3 Dot Menu */}
@@ -195,13 +218,17 @@ const Navbar = () => {
                   <Search className="w-5 h-5 text-gray-700" />
                 </button>
                 
-                <Link href="/wishlist" className="p-1 relative">
+                <Link href="/my-account/wishlist" className="p-1 relative">
                   <Heart className="w-5 h-5 text-gray-700" />
                 </Link>
                 
                 <Link href="/cart" className="p-1 relative">
                   <ShoppingBag className="w-5 h-5 text-gray-700" />
-                  <span className="absolute top-0 right-0 bg-black text-white text-[8px] rounded-full w-4 h-4 flex items-center justify-center">0</span>
+                  {cartCount > 0 && (
+                    <span className="absolute top-0 right-0 bg-black text-white text-[8px] rounded-full w-4 h-4 flex items-center justify-center">
+                      {cartCount > 99 ? '99+' : cartCount}
+                    </span>
+                  )}
                 </Link>
                 
                 <div className="relative" ref={mobileUserMenuRef}>

@@ -14,7 +14,7 @@ export default function MyAccount() {
     { name: "Order History", href: "#" },
     { name: "Rewards", href: "#" },
     { name: "Recommendations", href: "/my-account" },
-    { name: "Wishlist", href: "#" },
+    { name: "Wishlist", href: "/my-account/wishlist" },
     { name: "Credit Note", href: "#" },
     { name: "Returns", href: "#" },
     { name: "Remove Account", href: "#" }
@@ -107,7 +107,7 @@ export default function MyAccount() {
               </div>
 
               {/* Wishlist Card */}
-              <div className="bg-white p-0 group cursor-pointer">
+              <Link href="/my-account/wishlist" className="bg-white p-0 group cursor-pointer block">
                 <div className="aspect-[3/4] relative bg-gray-50 mb-6 flex items-center justify-center overflow-hidden">
                    {/* Placeholder Graphic for Wishlist */}
                    <div className="opacity-10 text-9xl font-serif">M</div> 
@@ -122,7 +122,7 @@ export default function MyAccount() {
                   <h3 className="font-bold text-lg mb-2">Wishlist</h3>
                   <p className="text-gray-500 text-sm">All your saved items in one place</p>
                 </div>
-              </div>
+              </Link>
 
               {/* Rewards Card */}
               <div className="bg-white p-0 group cursor-pointer">

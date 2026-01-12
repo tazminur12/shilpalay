@@ -22,7 +22,7 @@ export default function AccountInfo() {
     { name: "Order History", href: "#" },
     { name: "Rewards", href: "#" },
     { name: "Recommendations", href: "/my-account" },
-    { name: "Wishlist", href: "#" },
+    { name: "Wishlist", href: "/my-account/wishlist" },
     { name: "Credit Note", href: "#" },
     { name: "Returns", href: "#" },
     { name: "Remove Account", href: "#" }
