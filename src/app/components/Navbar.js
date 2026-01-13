@@ -252,9 +252,9 @@ const Navbar = () => {
 
               {/* Desktop: Search Bar and Icons */}
               <div className="hidden md:flex items-center space-x-4 lg:space-x-5 ml-auto">
-                <div className="relative mr-2">
+                <div className="relative mr-2" suppressHydrationWarning>
                   <form onSubmit={handleSearchSubmit} className="flex items-center border-b border-gray-300 pb-0.5">
-                    <Search className="w-4 h-4 text-gray-500 mr-2 shrink-0" />
+                    <Search className="w-4 h-4 text-gray-500 mr-2 shrink-0" suppressHydrationWarning />
                     <input
                       ref={searchInputRef}
                       type="text"
@@ -337,7 +337,7 @@ const Navbar = () => {
                                 onClick={handleSearchSubmit}
                                 className="w-full text-left px-3 py-2 text-sm text-black hover:bg-gray-50 rounded-lg transition-colors font-medium"
                               >
-                                View all results for "{searchQuery}"
+                                {`View all results for "${searchQuery}"`}
                               </button>
                             </div>
                           )}

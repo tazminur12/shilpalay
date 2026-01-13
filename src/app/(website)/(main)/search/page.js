@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -17,25 +17,43 @@ function SearchPageContent() {
   const [categories, setCategories] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState('grid');
+  const [isInitialized, setIsInitialized] = useState(false);
   
-  // Search and filter states
-  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
-  const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || 'all');
-  const [minPrice, setMinPrice] = useState(searchParams.get('minPrice') || '');
-  const [maxPrice, setMaxPrice] = useState(searchParams.get('maxPrice') || '');
-  const [sortBy, setSortBy] = useState(searchParams.get('sortBy') || 'relevance');
-  const [inStockOnly, setInStockOnly] = useState(searchParams.get('inStock') === 'true');
+  // Search and filter states - initialize from URL params
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [minPrice, setMinPrice] = useState('');
+  const [maxPrice, setMaxPrice] = useState('');
+  const [sortBy, setSortBy] = useState('relevance');
+  const [inStockOnly, setInStockOnly] = useState(false);
   const [pagination, setPagination] = useState(null);
+  const hasSearchedRef = useRef(false);
+  const isInitialLoadRef = useRef(true);
+  const searchTimeoutRef = useRef(null);
+
+  // Initialize state from URL params only once on mount
+  useEffect(() => {
+    if (!isInitialized) {
+      const q = searchParams.get('q') || '';
+      const category = searchParams.get('category') || 'all';
+      const min = searchParams.get('minPrice') || '';
+      const max = searchParams.get('maxPrice') || '';
+      const sort = searchParams.get('sortBy') || 'relevance';
+      const inStock = searchParams.get('inStock') === 'true';
+      
+      setSearchQuery(q);
+      setSelectedCategory(category);
+      setMinPrice(min);
+      setMaxPrice(max);
+      setSortBy(sort);
+      setInStockOnly(inStock);
+      setIsInitialized(true);
+    }
+  }, [searchParams, isInitialized]);
 
   useEffect(() => {
     fetchCategories();
   }, []);
-
-  useEffect(() => {
-    if (searchQuery || selectedCategory !== 'all') {
-      performSearch();
-    }
-  }, [searchQuery, selectedCategory, minPrice, maxPrice, sortBy, inStockOnly, searchParams]);
 
   const fetchCategories = async () => {
     try {
@@ -49,7 +67,7 @@ function SearchPageContent() {
     }
   };
 
-  const performSearch = async (page = 1) => {
+  const performSearch = useCallback(async (page = 1) => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -68,21 +86,66 @@ function SearchPageContent() {
         setProducts(data.products || []);
         setPagination(data.pagination);
         
-        // Update URL without reload
+        // Update URL without reload - only if params changed
         const newParams = new URLSearchParams(params);
         newParams.delete('page');
-        router.replace(`/search?${newParams.toString()}`, { scroll: false });
+        const newUrl = `/search?${newParams.toString()}`;
+        if (typeof window !== 'undefined') {
+          const currentUrl = window.location.pathname + window.location.search;
+          if (currentUrl !== newUrl) {
+            router.replace(newUrl, { scroll: false });
+          }
+        } else {
+          router.replace(newUrl, { scroll: false });
+        }
       }
     } catch (error) {
       console.error('Search error:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchQuery, selectedCategory, minPrice, maxPrice, sortBy, inStockOnly, router]);
+
+  // Perform search only after initialization and when filters change (debounced)
+  useEffect(() => {
+    if (!isInitialized) return;
+    
+    // Clear any pending search
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    // Only perform search if there's actual search criteria
+    // Don't auto-search on initial load if no params in URL
+    const hasSearchCriteria = searchQuery.trim() || (selectedCategory !== 'all');
+    
+    if (hasSearchCriteria) {
+      // On initial load with URL params, search immediately
+      // After that, debounce to prevent excessive API calls
+      const delay = isInitialLoadRef.current ? 0 : 300;
+      searchTimeoutRef.current = setTimeout(() => {
+        performSearch();
+        hasSearchedRef.current = true;
+        isInitialLoadRef.current = false;
+      }, delay);
+    } else {
+      // No search criteria - just set loading to false
+      setLoading(false);
+      isInitialLoadRef.current = false;
+    }
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [isInitialized, searchQuery, selectedCategory, minPrice, maxPrice, sortBy, inStockOnly, performSearch]);
 
   const handleSearch = (e) => {
     e.preventDefault();
-    performSearch(1);
+    if (searchQuery.trim() || selectedCategory !== 'all') {
+      performSearch(1);
+    }
   };
 
   const handleFilterChange = () => {
@@ -105,15 +168,15 @@ function SearchPageContent() {
       {/* Header */}
       <div className="bg-white border-b border-gray-200 py-6">
         <div className="max-w-[1920px] mx-auto px-4 lg:px-8">
-          <h1 className="text-2xl md:text-3xl font-bold uppercase tracking-wide mb-4">
+          <h1 className="text-2xl md:text-3xl font-bold uppercase tracking-wide mb-4" suppressHydrationWarning>
             {searchQuery ? `Search: "${searchQuery}"` : 'Search Products'}
           </h1>
           
           {/* Search Bar */}
-          <form onSubmit={handleSearch} className="mb-4">
+          <form onSubmit={handleSearch} className="mb-4" suppressHydrationWarning>
             <div className="flex gap-2">
               <div className="flex-1 relative">
-                <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" suppressHydrationWarning />
                 <input
                   type="text"
                   value={searchQuery}
