@@ -112,7 +112,25 @@ Accessible at **`/dashboard`** (role‑protected via NextAuth).
    yarn
    ```
 
-2. **Run the dev server**
+2. **Set up environment variables**
+
+   ```bash
+   # Copy the example environment file
+   cp .env.example .env.local
+   
+   # Edit .env.local and fill in your actual values
+   # Required variables:
+   # - MONGO_URI (MongoDB connection string)
+   # - NEXTAUTH_SECRET (generate with: openssl rand -base64 32)
+   # - NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
+   # - NEXT_PUBLIC_CLOUDINARY_API_KEY
+   # - CLOUDINARY_API_SECRET
+   # - NEXT_PUBLIC_SITE_URL
+   ```
+
+   See [ENV_SETUP.md](./ENV_SETUP.md) for detailed setup instructions.
+
+3. **Run the dev server**
 
    ```bash
    npm run dev
@@ -120,9 +138,9 @@ Accessible at **`/dashboard`** (role‑protected via NextAuth).
    yarn dev
    ```
 
-3. Open `http://localhost:3000` in your browser.
+4. Open `http://localhost:3000` in your browser.
 
-> Make sure you have MongoDB connection details configured in your environment (see `src/lib/db.js`).
+> **Important**: Make sure all required environment variables are set in `.env.local` before running the application.
 
 ---
 
@@ -139,6 +157,15 @@ Accessible at **`/dashboard`** (role‑protected via NextAuth).
 - `src/models` – Mongoose models (Product, Category, User, Banner, etc.)
 
 ---
+
+## Environment Variables
+
+Required environment variables are documented in [ENV_SETUP.md](./ENV_SETUP.md).
+
+**Quick Setup:**
+1. Copy `.env.example` to `.env.local`
+2. Fill in your MongoDB, NextAuth, and Cloudinary credentials
+3. Restart your development server
 
 ## Roadmap / Ideas
 

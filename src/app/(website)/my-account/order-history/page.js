@@ -133,24 +133,67 @@ export default function OrderHistoryPage() {
   };
 
   const handleCancelOrder = async (orderId) => {
-    const result = await Swal.fire({
+    const { value: reason } = await Swal.fire({
       title: 'Cancel Order?',
       text: 'Are you sure you want to cancel this order?',
       icon: 'warning',
+      input: 'textarea',
+      inputLabel: 'Reason for cancellation (optional)',
+      inputPlaceholder: 'Enter reason...',
+      inputAttributes: {
+        'aria-label': 'Enter reason for cancellation'
+      },
       showCancelButton: true,
-      confirmButtonColor: '#000',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Yes, cancel it!'
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Yes, cancel it!',
+      cancelButtonText: 'No, keep it',
+      inputValidator: (value) => {
+        // Reason is optional, so no validation needed
+        return null;
+      }
     });
 
-    if (result.isConfirmed) {
+    if (reason !== undefined) {
       try {
-        // TODO: API call to cancel order
-        // const res = await fetch(`/api/orders/${orderId}/cancel`, { method: 'PUT' });
-        Swal.fire('Cancelled', 'Your order has been cancelled', 'info');
+        Swal.fire({
+          title: 'Processing...',
+          text: 'Cancelling your order',
+          allowOutsideClick: false,
+          didOpen: () => {
+            Swal.showLoading();
+          }
+        });
+
+        const res = await fetch(`/api/orders/${orderId}/cancel`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ reason: reason || 'No reason provided' }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.message || 'Failed to cancel order');
+        }
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Order Cancelled',
+          text: 'Your order has been cancelled successfully',
+          confirmButtonColor: '#000',
+        });
+        
         fetchOrders();
       } catch (error) {
-        Swal.fire('Error', 'Failed to cancel order', 'error');
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: error.message || 'Failed to cancel order. Please try again.',
+          confirmButtonColor: '#000',
+        });
       }
     }
   };

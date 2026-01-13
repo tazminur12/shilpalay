@@ -8,6 +8,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Swal from 'sweetalert2';
 import { getCart, updateCartQuantity, removeFromCart as removeCartItem } from '@/lib/cart';
+import Loading from '@/app/components/ui/Loading';
 
 export default function CartPage() {
   const { data: session } = useSession();
@@ -253,7 +254,7 @@ export default function CartPage() {
     return (
       <div className="min-h-screen bg-white py-12">
         <div className="max-w-[1920px] mx-auto px-4 lg:px-8">
-          <div className="text-center text-gray-400 py-20">Loading cart...</div>
+          <Loading text="Loading cart..." />
         </div>
       </div>
     );

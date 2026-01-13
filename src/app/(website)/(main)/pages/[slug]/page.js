@@ -3,6 +3,7 @@
 import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
+import Loading from '@/app/components/ui/Loading';
 
 export default function StaticPageView({ params: routeParams }) {
   const params = use(routeParams);
@@ -42,7 +43,7 @@ export default function StaticPageView({ params: routeParams }) {
     return (
       <div className="min-h-screen bg-white py-12">
         <div className="max-w-4xl mx-auto px-4 lg:px-8">
-          <div className="text-center text-gray-400">Loading...</div>
+          <Loading text="Loading page..." />
         </div>
       </div>
     );

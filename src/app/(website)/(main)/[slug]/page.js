@@ -2,13 +2,15 @@
 
 import { useEffect, useState, use } from 'react';
 import PageLayout from '@/app/components/PageLayout';
+import NotFoundPage from '@/app/components/NotFoundPage';
+import Loading from '@/app/components/ui/Loading';
 
 const MainCategoryPage = ({ params }) => {
   const { slug } = use(params);
   const [category, setCategory] = useState(null);
   const [pageContent, setPageContent] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [shouldShow404, setShouldShow404] = useState(false);
 
   useEffect(() => {
     // Only process if slug is not a reserved route
@@ -16,7 +18,7 @@ const MainCategoryPage = ({ params }) => {
     if (slug && !reservedRoutes.includes(slug.toLowerCase())) {
       fetchCategoryAndPageContent();
     } else if (slug && reservedRoutes.includes(slug.toLowerCase())) {
-      setError('Invalid route');
+      setShouldShow404(true);
       setLoading(false);
     }
   }, [slug]);
@@ -31,7 +33,9 @@ const MainCategoryPage = ({ params }) => {
       const foundCategory = categories.find(cat => cat.slug === slug);
       
       if (!foundCategory) {
-        throw new Error('Category not found');
+        setShouldShow404(true);
+        setLoading(false);
+        return;
       }
       
       setCategory(foundCategory);
@@ -55,7 +59,7 @@ const MainCategoryPage = ({ params }) => {
         });
       }
     } catch (err) {
-      setError(err.message);
+      setShouldShow404(true);
       console.error("Failed to fetch page data", err);
     } finally {
       setLoading(false);
@@ -66,30 +70,14 @@ const MainCategoryPage = ({ params }) => {
     return (
       <div className="min-h-screen bg-white py-12">
         <div className="max-w-[1920px] mx-auto px-4 lg:px-8">
-          <div className="text-center text-gray-400">Loading...</div>
+          <Loading text="Loading category..." />
         </div>
       </div>
     );
   }
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-white py-12">
-        <div className="max-w-[1920px] mx-auto px-4 lg:px-8">
-          <div className="text-center text-red-500">Error: {error}</div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!category || !pageContent) {
-    return (
-      <div className="min-h-screen bg-white py-12">
-        <div className="max-w-[1920px] mx-auto px-4 lg:px-8">
-          <div className="text-center text-gray-500">Category not found.</div>
-        </div>
-      </div>
-    );
+  if (shouldShow404 || !category) {
+    return <NotFoundPage />;
   }
 
   return (

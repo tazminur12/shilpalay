@@ -5,6 +5,7 @@ import Topbar from "../components/dashboard/Topbar";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import Loading from "../components/ui/Loading";
 
 export default function DashboardLayout({ children }) {
   const { data: session, status } = useSession();
@@ -31,9 +32,11 @@ export default function DashboardLayout({ children }) {
   // Show loading state while checking authentication
   if (status === "loading") {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="text-gray-400">Loading...</div>
-      </div>
+      <Loading 
+        text="Loading dashboard..." 
+        fullScreen 
+        className="bg-gray-50"
+      />
     );
   }
 

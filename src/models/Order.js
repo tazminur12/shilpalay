@@ -76,6 +76,10 @@ const OrderSchema = new mongoose.Schema({
     default: 0,
     min: 0,
   },
+  couponCode: {
+    type: String,
+    default: null,
+  },
   total: {
     type: Number,
     required: true,
@@ -117,6 +121,43 @@ const OrderSchema = new mongoose.Schema({
   notes: {
     type: String,
     default: '',
+  },
+  // Order Tracking
+  trackingNumber: {
+    type: String,
+    default: null,
+  },
+  trackingHistory: [{
+    status: {
+      type: String,
+      enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled', 'returned'],
+      required: true,
+    },
+    message: String,
+    location: String,
+    timestamp: {
+      type: Date,
+      default: Date.now,
+    },
+  }],
+  // Cancellation
+  cancelledAt: {
+    type: Date,
+    default: null,
+  },
+  cancellationReason: {
+    type: String,
+    default: null,
+  },
+  cancelledBy: {
+    type: String,
+    enum: ['customer', 'admin'],
+    default: null,
+  },
+  // Estimated delivery
+  estimatedDeliveryDate: {
+    type: Date,
+    default: null,
   },
 }, {
   timestamps: true,

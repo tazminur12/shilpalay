@@ -3,10 +3,11 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
-import { ArrowLeft, Package, Truck, MapPin, CreditCard, Calendar, Phone, Mail, CheckCircle, Clock, RefreshCw, XCircle, RefreshCcw } from 'lucide-react';
+import { ArrowLeft, Package, Truck, MapPin, CreditCard, Calendar, Phone, Mail, CheckCircle, Clock, RefreshCw, XCircle, RefreshCcw, FileText, Download } from 'lucide-react';
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Swal from 'sweetalert2';
+import InvoiceGenerator from '@/app/components/InvoiceGenerator';
 
 export default function OrderDetailPage({ params: routeParams }) {
   const { data: session } = useSession();
@@ -16,6 +17,9 @@ export default function OrderDetailPage({ params: routeParams }) {
   
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [trackingData, setTrackingData] = useState(null);
+  const [showInvoice, setShowInvoice] = useState(false);
+  const [invoiceData, setInvoiceData] = useState(null);
 
   const menuItems = [
     { name: "Account Information", href: "/my-account/account-info" },
@@ -31,6 +35,7 @@ export default function OrderDetailPage({ params: routeParams }) {
   useEffect(() => {
     if (session && orderId) {
       fetchOrder();
+      fetchTracking();
     }
   }, [session, orderId]);
 
@@ -112,8 +117,49 @@ export default function OrderDetailPage({ params: routeParams }) {
     });
   };
 
+  const fetchTracking = async () => {
+    try {
+      const res = await fetch(`/api/orders/${orderId}/tracking`);
+      if (res.ok) {
+        const data = await res.json();
+        setTrackingData(data);
+      }
+    } catch (error) {
+      console.error('Error fetching tracking:', error);
+    }
+  };
+
   const handleRequestReturn = () => {
     router.push(`/my-account/order-history/${orderId}/return`);
+  };
+
+  const handleDownloadInvoice = async () => {
+    try {
+      Swal.fire({
+        title: 'Generating Invoice...',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      const res = await fetch(`/api/orders/${orderId}/invoice`);
+      if (res.ok) {
+        const data = await res.json();
+        setInvoiceData(data);
+        setShowInvoice(true);
+        Swal.close();
+      } else {
+        const error = await res.json();
+        throw new Error(error.message || 'Failed to generate invoice');
+      }
+    } catch (error) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: error.message || 'Failed to generate invoice',
+      });
+    }
   };
 
   if (!session) {
@@ -374,6 +420,77 @@ export default function OrderDetailPage({ params: routeParams }) {
                 </div>
               </div>
 
+              {/* Cancel Order Button for Pending Orders */}
+              {order.status === 'pending' && (
+                <div className="bg-white border border-gray-200 rounded-lg p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-800 mb-1">Want to Cancel?</h3>
+                      <p className="text-sm text-gray-600">You can cancel this order if it hasn't been processed yet</p>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        const { value: reason } = await Swal.fire({
+                          title: 'Cancel Order?',
+                          text: 'Are you sure you want to cancel this order?',
+                          icon: 'warning',
+                          input: 'textarea',
+                          inputLabel: 'Reason for cancellation (optional)',
+                          inputPlaceholder: 'Enter reason...',
+                          showCancelButton: true,
+                          confirmButtonColor: '#dc2626',
+                          cancelButtonColor: '#6b7280',
+                          confirmButtonText: 'Yes, cancel it!',
+                          cancelButtonText: 'No, keep it',
+                        });
+
+                        if (reason !== undefined) {
+                          try {
+                            Swal.fire({
+                              title: 'Processing...',
+                              allowOutsideClick: false,
+                              didOpen: () => Swal.showLoading(),
+                            });
+
+                            const res = await fetch(`/api/orders/${orderId}/cancel`, {
+                              method: 'PUT',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ reason: reason || 'No reason provided' }),
+                            });
+
+                            const data = await res.json();
+
+                            if (!res.ok) {
+                              throw new Error(data.message || 'Failed to cancel order');
+                            }
+
+                            Swal.fire({
+                              icon: 'success',
+                              title: 'Order Cancelled',
+                              text: 'Your order has been cancelled successfully',
+                              confirmButtonColor: '#000',
+                            });
+
+                            fetchOrder();
+                            fetchTracking();
+                          } catch (error) {
+                            Swal.fire({
+                              icon: 'error',
+                              title: 'Error',
+                              text: error.message || 'Failed to cancel order',
+                            });
+                          }
+                        }
+                      }}
+                      className="flex items-center gap-2 px-6 py-3 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
+                    >
+                      <XCircle className="w-4 h-4" />
+                      Cancel Order
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Return Request Button for Delivered Orders */}
               {order.status === 'delivered' && !order.returnStatus && (
                 <div className="bg-white border border-gray-200 rounded-lg p-6">
@@ -415,11 +532,101 @@ export default function OrderDetailPage({ params: routeParams }) {
                   </div>
                 </div>
               )}
+
+              {/* Order Tracking */}
+              {trackingData && (
+                <div className="bg-white border border-gray-200 rounded-lg p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Truck className="w-5 h-5 text-gray-600" />
+                    <h3 className="text-lg font-bold text-gray-800">Order Tracking</h3>
+                  </div>
+                  
+                  {trackingData.trackingNumber && (
+                    <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                      <p className="text-sm text-gray-600">Tracking Number</p>
+                      <p className="text-lg font-semibold text-gray-900">{trackingData.trackingNumber}</p>
+                    </div>
+                  )}
+
+                  {trackingData.estimatedDeliveryDate && (
+                    <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+                      <p className="text-sm text-blue-600">Estimated Delivery</p>
+                      <p className="text-lg font-semibold text-blue-900">
+                        {formatDate(trackingData.estimatedDeliveryDate)}
+                      </p>
+                    </div>
+                  )}
+
+                  {trackingData.trackingHistory && trackingData.trackingHistory.length > 0 && (
+                    <div className="space-y-4">
+                      <h4 className="font-semibold text-gray-700">Tracking History</h4>
+                      <div className="relative">
+                        <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200"></div>
+                        <div className="space-y-4">
+                          {trackingData.trackingHistory.map((track, idx) => (
+                            <div key={idx} className="relative flex items-start gap-4">
+                              <div className={`relative z-10 w-8 h-8 rounded-full flex items-center justify-center ${
+                                idx === trackingData.trackingHistory.length - 1 
+                                  ? 'bg-black' 
+                                  : 'bg-gray-300'
+                              }`}>
+                                {idx === trackingData.trackingHistory.length - 1 && (
+                                  <CheckCircle className="w-5 h-5 text-white" />
+                                )}
+                              </div>
+                              <div className="flex-1 pb-4">
+                                <p className="font-medium text-gray-900 capitalize">{track.status}</p>
+                                {track.message && (
+                                  <p className="text-sm text-gray-600 mt-1">{track.message}</p>
+                                )}
+                                {track.location && (
+                                  <p className="text-xs text-gray-500 mt-1">📍 {track.location}</p>
+                                )}
+                                <p className="text-xs text-gray-500 mt-1">
+                                  {formatDate(track.timestamp)}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Download Invoice Button */}
+              <div className="bg-white border border-gray-200 rounded-lg p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-800 mb-1">Invoice</h3>
+                    <p className="text-sm text-gray-600">Download or print your order invoice</p>
+                  </div>
+                  <button
+                    onClick={handleDownloadInvoice}
+                    className="flex items-center gap-2 px-6 py-3 text-sm font-medium text-white bg-black rounded-lg hover:bg-gray-800 transition-colors"
+                  >
+                    <Download className="w-4 h-4" />
+                    Download Invoice
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 
         </div>
       </div>
+
+      {/* Invoice Modal */}
+      {showInvoice && invoiceData && (
+        <InvoiceGenerator
+          invoiceData={invoiceData}
+          onClose={() => {
+            setShowInvoice(false);
+            setInvoiceData(null);
+          }}
+        />
+      )}
     </main>
   );
 }

@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { Truck, CreditCard, Wallet, ChevronDown } from 'lucide-react';
+import { Truck, CreditCard, Wallet, ChevronDown, Tag, X } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { getCart } from '@/lib/cart';
 
@@ -33,6 +33,11 @@ export default function CheckoutPage() {
   const [shippingMethod, setShippingMethod] = useState('standard');
   const [paymentMethod, setPaymentMethod] = useState('');
   const [deliveryInstructions, setDeliveryInstructions] = useState('');
+  
+  // Coupon states
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [applyingCoupon, setApplyingCoupon] = useState(false);
 
   useEffect(() => {
     if (!session) {
@@ -72,17 +77,96 @@ export default function CheckoutPage() {
     return subtotal >= 5000 ? 0 : 100;
   };
 
+  const calculateDiscount = () => {
+    if (!appliedCoupon) return 0;
+    
+    // If discountAmount is already calculated, use it
+    if (appliedCoupon.discountAmount !== undefined) {
+      return appliedCoupon.discountAmount;
+    }
+    
+    // Fallback calculation
+    const subtotal = calculateSubtotal();
+    if (appliedCoupon.discountType === 'percent') {
+      let discount = (subtotal * appliedCoupon.discountValue) / 100;
+      // Apply max discount limit if set
+      if (appliedCoupon.maxDiscountAmount && discount > appliedCoupon.maxDiscountAmount) {
+        discount = appliedCoupon.maxDiscountAmount;
+      }
+      return discount;
+    } else {
+      return Math.min(appliedCoupon.discountValue, subtotal);
+    }
+  };
+
   const calculateVAT = () => {
     const subtotal = calculateSubtotal();
+    const discount = calculateDiscount();
     const vatRate = 10; // 10% VAT
-    return (subtotal * vatRate) / 100;
+    return ((subtotal - discount) * vatRate) / 100;
   };
 
   const calculateTotal = () => {
     const subtotal = calculateSubtotal();
+    const discount = calculateDiscount();
     const shipping = getShippingCost();
     const vat = calculateVAT();
-    return subtotal + shipping + vat;
+    return subtotal - discount + shipping + vat;
+  };
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) {
+      Swal.fire('Error', 'Please enter a coupon code', 'error');
+      return;
+    }
+
+    setApplyingCoupon(true);
+    try {
+      const subtotal = calculateSubtotal();
+      const res = await fetch('/api/coupons/validate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          code: couponCode.trim(),
+          subtotal: subtotal,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to validate coupon');
+      }
+
+      if (data.valid && data.coupon) {
+        setAppliedCoupon(data.coupon);
+        setCouponCode('');
+        Swal.fire({
+          icon: 'success',
+          title: 'Coupon Applied!',
+          text: `${data.coupon.name || 'Coupon'} has been applied successfully`,
+          timer: 2000,
+          showConfirmButton: false,
+        });
+      } else {
+        throw new Error('Invalid coupon code');
+      }
+    } catch (error) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Coupon Error',
+        text: error.message || 'Failed to apply coupon. Please check the code and try again.',
+      });
+    } finally {
+      setApplyingCoupon(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode('');
   };
 
   const handlePlaceOrder = async () => {
@@ -114,6 +198,7 @@ export default function CheckoutPage() {
     try {
       // Calculate order totals
       const subtotal = calculateSubtotal();
+      const discount = calculateDiscount();
       const shipping = getShippingCost();
       const vat = calculateVAT();
       const total = calculateTotal();
@@ -147,8 +232,9 @@ export default function CheckoutPage() {
         subtotal: subtotal,
         shippingCost: shipping,
         vat: vat,
-        discount: 0,
+        discount: discount,
         total: total,
+        couponCode: appliedCoupon?.code || null,
         shippingMethod: shippingMethod,
         paymentMethod: paymentMethod,
         paymentStatus: paymentMethod === 'cod' ? 'pending' : 'paid',
@@ -213,6 +299,7 @@ export default function CheckoutPage() {
   }
 
   const subtotal = calculateSubtotal();
+  const discount = calculateDiscount();
   const shipping = getShippingCost();
   const vat = calculateVAT();
   const total = calculateTotal();
@@ -537,12 +624,73 @@ export default function CheckoutPage() {
                       })}
                     </div>
 
+                    {/* Coupon Section */}
+                    <div className="mb-6 border-b border-gray-200 pb-4">
+                      {!appliedCoupon ? (
+                        <div className="space-y-2">
+                          <label className="block text-xs font-medium text-gray-700 mb-1">
+                            Have a coupon code?
+                          </label>
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              value={couponCode}
+                              onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                              onKeyPress={(e) => {
+                                if (e.key === 'Enter') {
+                                  handleApplyCoupon();
+                                }
+                              }}
+                              placeholder="Enter coupon code"
+                              className="flex-1 px-3 py-2 border border-gray-300 text-sm outline-none focus:border-black transition-colors"
+                            />
+                            <button
+                              onClick={handleApplyCoupon}
+                              disabled={applyingCoupon || !couponCode.trim()}
+                              className="px-4 py-2 bg-black text-white text-xs uppercase tracking-wider font-medium hover:bg-gray-800 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                            >
+                              {applyingCoupon ? '...' : 'APPLY'}
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Tag className="w-4 h-4 text-green-600" />
+                              <div>
+                                <p className="text-xs font-semibold text-green-900">
+                                  {appliedCoupon.code} - {appliedCoupon.name || 'Coupon Applied'}
+                                </p>
+                                <p className="text-xs text-green-700">
+                                  Discount: Tk {discount.toFixed(2)}
+                                </p>
+                              </div>
+                            </div>
+                            <button
+                              onClick={handleRemoveCoupon}
+                              className="p-1 text-green-600 hover:text-green-800 transition-colors"
+                              title="Remove coupon"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
                     {/* Price Breakdown */}
                     <div className="space-y-2 mb-6 border-t border-gray-200 pt-4">
                       <div className="flex justify-between text-xs">
                         <span className="text-gray-600">SUBTOTAL</span>
                         <span className="font-medium">Tk {subtotal.toFixed(2)}</span>
                       </div>
+                      {discount > 0 && (
+                        <div className="flex justify-between text-xs text-green-600">
+                          <span>DISCOUNT ({appliedCoupon?.code})</span>
+                          <span className="font-medium">-Tk {discount.toFixed(2)}</span>
+                        </div>
+                      )}
                       <div className="flex justify-between text-xs">
                         <span className="text-gray-600">SHIPPING</span>
                         <span className="font-medium">Tk {shipping.toFixed(2)}</span>

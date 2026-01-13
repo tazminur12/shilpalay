@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import Order from '@/models/Order';
 import Product from '@/models/Product';
+import Coupon from '@/models/Coupon';
 
 // GET - Fetch all orders
 export async function GET(req) {
@@ -66,6 +67,20 @@ export async function POST(req) {
     // Create order
     const order = new Order(data);
     await order.save();
+    
+    // Update coupon usage if coupon code is provided
+    if (data.couponCode) {
+      try {
+        const coupon = await Coupon.findOne({ code: data.couponCode });
+        if (coupon) {
+          coupon.usedCount = (coupon.usedCount || 0) + 1;
+          await coupon.save();
+        }
+      } catch (couponError) {
+        console.error('Error updating coupon usage:', couponError);
+        // Don't fail the order if coupon update fails
+      }
+    }
     
     // Decrease stock for each item
     for (const item of data.items) {
