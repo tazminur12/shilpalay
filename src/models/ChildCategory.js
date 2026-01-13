@@ -22,4 +22,10 @@ const ChildCategorySchema = new mongoose.Schema({
   },
 }, { timestamps: true });
 
+// Indexes for better query performance
+ChildCategorySchema.index({ slug: 1 });
+ChildCategorySchema.index({ subCategory: 1 });
+ChildCategorySchema.index({ status: 1 });
+ChildCategorySchema.index({ subCategory: 1, status: 1 });
+
 export default mongoose.models.ChildCategory || mongoose.model('ChildCategory', ChildCategorySchema);

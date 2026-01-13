@@ -39,6 +39,12 @@ const StaticPageSchema = new mongoose.Schema({
   timestamps: true,
 });
 
+// Indexes for better query performance
+StaticPageSchema.index({ slug: 1 });
+StaticPageSchema.index({ pageType: 1 });
+StaticPageSchema.index({ status: 1 });
+StaticPageSchema.index({ status: 1, pageType: 1 });
+
 // Prevent model overwrite during hot-reload
 if (mongoose.models.StaticPage) {
   delete mongoose.models.StaticPage;

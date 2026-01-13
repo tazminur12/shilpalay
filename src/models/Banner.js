@@ -37,6 +37,13 @@ const BannerSchema = new mongoose.Schema({
   strictPopulate: false 
 });
 
+// Indexes for better query performance
+BannerSchema.index({ status: 1 });
+BannerSchema.index({ position: 1 });
+BannerSchema.index({ category: 1 });
+BannerSchema.index({ status: 1, position: 1 });
+BannerSchema.index({ status: 1, sortOrder: 1 });
+
 // Delete the model from cache if it exists to force recompilation
 if (mongoose.models.Banner) {
   delete mongoose.models.Banner;

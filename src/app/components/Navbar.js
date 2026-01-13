@@ -20,6 +20,15 @@ const Navbar = () => {
   const [cartCount, setCartCount] = useState(0);
   const hoverTimeoutRef = useRef(null);
   
+  // Search states
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchSuggestions, setSearchSuggestions] = useState(null);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const searchTimeoutRef = useRef(null);
+  const searchInputRef = useRef(null);
+  const suggestionsRef = useRef(null);
+  
   const { data: session } = useSession();
   const router = useRouter();
 
@@ -94,6 +103,82 @@ const Navbar = () => {
     }
   }, [isMobileSearchOpen]);
 
+  // Search autocomplete
+  useEffect(() => {
+    if (searchQuery.trim().length >= 2) {
+      // Debounce search
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+      
+      searchTimeoutRef.current = setTimeout(() => {
+        fetchSearchSuggestions(searchQuery);
+      }, 300);
+    } else {
+      setSearchSuggestions(null);
+      setShowSuggestions(false);
+    }
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [searchQuery]);
+
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        suggestionsRef.current &&
+        !suggestionsRef.current.contains(event.target) &&
+        searchInputRef.current &&
+        !searchInputRef.current.contains(event.target)
+      ) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const fetchSearchSuggestions = async (query) => {
+    if (!query || query.trim().length < 2) return;
+    
+    setSearchLoading(true);
+    try {
+      const res = await fetch(`/api/products/autocomplete?q=${encodeURIComponent(query.trim())}`);
+      if (res.ok) {
+        const data = await res.json();
+        setSearchSuggestions(data);
+        setShowSuggestions(true);
+      }
+    } catch (error) {
+      console.error('Error fetching suggestions:', error);
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      setShowSuggestions(false);
+      setSearchQuery('');
+    }
+  };
+
+  const handleSuggestionClick = (item) => {
+    if (item.type === 'product') {
+      router.push(`/product/${item.slug}`);
+    } else if (item.type === 'category') {
+      router.push(`/${item.slug}`);
+    }
+    setShowSuggestions(false);
+    setSearchQuery('');
+  };
+
   // ২. নেভিগেশন হ্যান্ডলার (ফিক্সড: e.stopPropagation সরানো হয়েছে)
   const closeAllMenus = () => {
     setIsUserMenuOpen(false);
@@ -167,9 +252,99 @@ const Navbar = () => {
 
               {/* Desktop: Search Bar and Icons */}
               <div className="hidden md:flex items-center space-x-4 lg:space-x-5 ml-auto">
-                <div className="flex items-center border-b border-gray-300 pb-0.5 mr-2">
-                  <Search className="w-4 h-4 text-gray-500 mr-2" />
-                  <input type="text" placeholder="Search product" className="outline-none text-[12px] w-28 lg:w-40 bg-transparent" />
+                <div className="relative mr-2">
+                  <form onSubmit={handleSearchSubmit} className="flex items-center border-b border-gray-300 pb-0.5">
+                    <Search className="w-4 h-4 text-gray-500 mr-2 shrink-0" />
+                    <input
+                      ref={searchInputRef}
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onFocus={() => {
+                        if (searchSuggestions) setShowSuggestions(true);
+                      }}
+                      placeholder="Search product"
+                      className="outline-none text-[12px] w-28 lg:w-40 bg-transparent"
+                    />
+                  </form>
+                  
+                  {/* Autocomplete Suggestions */}
+                  {showSuggestions && searchSuggestions && (
+                    <div
+                      ref={suggestionsRef}
+                      className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-xl z-[999] max-h-96 overflow-y-auto"
+                    >
+                      {searchLoading ? (
+                        <div className="p-4 text-center text-sm text-gray-500">Loading...</div>
+                      ) : (
+                        <>
+                          {searchSuggestions.products && searchSuggestions.products.length > 0 && (
+                            <div className="p-2">
+                              <div className="text-xs font-semibold text-gray-500 uppercase px-3 py-2">Products</div>
+                              {searchSuggestions.products.map((product) => (
+                                <button
+                                  key={product._id}
+                                  onClick={() => handleSuggestionClick(product)}
+                                  className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 rounded-lg transition-colors text-left"
+                                >
+                                  {product.thumbnail && (
+                                    <div className="relative w-12 h-16 bg-gray-100 rounded shrink-0">
+                                      <Image
+                                        src={product.thumbnail}
+                                        alt={product.name}
+                                        fill
+                                        className="object-cover rounded"
+                                      />
+                                    </div>
+                                  )}
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-gray-900 truncate">{product.name}</p>
+                                    <p className="text-xs text-gray-600">
+                                      Tk {product.price?.salePrice || product.price?.regularPrice || 0}
+                                    </p>
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                          
+                          {searchSuggestions.categories && searchSuggestions.categories.length > 0 && (
+                            <div className="p-2 border-t border-gray-200">
+                              <div className="text-xs font-semibold text-gray-500 uppercase px-3 py-2">Categories</div>
+                              {searchSuggestions.categories.map((category) => (
+                                <button
+                                  key={category._id}
+                                  onClick={() => handleSuggestionClick(category)}
+                                  className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 rounded-lg transition-colors text-left"
+                                >
+                                  <Search className="w-4 h-4 text-gray-400" />
+                                  <span className="text-sm text-gray-900">{category.name}</span>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                          
+                          {(!searchSuggestions.products || searchSuggestions.products.length === 0) &&
+                           (!searchSuggestions.categories || searchSuggestions.categories.length === 0) && (
+                            <div className="p-4 text-center text-sm text-gray-500">
+                              No results found
+                            </div>
+                          )}
+                          
+                          {searchQuery && (
+                            <div className="border-t border-gray-200 p-2">
+                              <button
+                                onClick={handleSearchSubmit}
+                                className="w-full text-left px-3 py-2 text-sm text-black hover:bg-gray-50 rounded-lg transition-colors font-medium"
+                              >
+                                View all results for "{searchQuery}"
+                              </button>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex items-center space-x-4 text-gray-700">
@@ -257,7 +432,14 @@ const Navbar = () => {
 
               {/* Mobile Area */}
               <div className="md:hidden flex items-center space-x-3 ml-auto">
-                <button onClick={() => setIsMobileSearchOpen(true)} className="p-1">
+                <button 
+                  onClick={() => {
+                    setIsMobileSearchOpen(true);
+                    setSearchQuery('');
+                  }} 
+                  className="p-1"
+                  aria-label="Search"
+                >
                   <Search className="w-5 h-5 text-gray-700" />
                 </button>
                 
@@ -373,12 +555,91 @@ const Navbar = () => {
       {/* Mobile Search Modal */}
       {isMobileSearchOpen && (
         <div className="fixed inset-0 bg-black/40 z-[9999]" onClick={closeAllMenus}>
-          <div className="bg-white p-4 mx-4 mt-20 rounded-lg shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center border-b border-gray-300 pb-2 mb-3">
-              <Search className="w-5 h-5 text-gray-500 mr-3" />
-              <input ref={mobileSearchRef} type="text" placeholder="Search product" className="flex-1 outline-none text-sm bg-transparent" />
-              <button onClick={closeAllMenus} className="ml-2 p-1"><X className="w-5 h-5 text-gray-600" /></button>
-            </div>
+          <div className="bg-white p-4 mx-4 mt-20 rounded-lg shadow-xl max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              if (searchQuery.trim()) {
+                router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+                closeAllMenus();
+              }
+            }}>
+              <div className="flex items-center border-b border-gray-300 pb-2 mb-3">
+                <Search className="w-5 h-5 text-gray-500 mr-3" />
+                <input
+                  ref={mobileSearchRef}
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    if (e.target.value.trim().length >= 2) {
+                      fetchSearchSuggestions(e.target.value);
+                    }
+                  }}
+                  placeholder="Search product"
+                  className="flex-1 outline-none text-sm bg-transparent"
+                />
+                <button type="button" onClick={closeAllMenus} className="ml-2 p-1">
+                  <X className="w-5 h-5 text-gray-600" />
+                </button>
+              </div>
+            </form>
+            
+            {/* Mobile Suggestions */}
+            {showSuggestions && searchSuggestions && (
+              <div className="max-h-64 overflow-y-auto">
+                {searchSuggestions.products && searchSuggestions.products.length > 0 && (
+                  <div className="mb-4">
+                    <div className="text-xs font-semibold text-gray-500 uppercase px-2 py-1">Products</div>
+                    {searchSuggestions.products.map((product) => (
+                      <button
+                        key={product._id}
+                        onClick={() => {
+                          router.push(`/product/${product.slug}`);
+                          closeAllMenus();
+                        }}
+                        className="w-full flex items-center gap-3 px-2 py-2 hover:bg-gray-50 rounded-lg"
+                      >
+                        {product.thumbnail && (
+                          <div className="relative w-12 h-16 bg-gray-100 rounded shrink-0">
+                            <Image
+                              src={product.thumbnail}
+                              alt={product.name}
+                              fill
+                              className="object-cover rounded"
+                            />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0 text-left">
+                          <p className="text-sm font-medium text-gray-900 truncate">{product.name}</p>
+                          <p className="text-xs text-gray-600">
+                            Tk {product.price?.salePrice || product.price?.regularPrice || 0}
+                          </p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                
+                {searchSuggestions.categories && searchSuggestions.categories.length > 0 && (
+                  <div>
+                    <div className="text-xs font-semibold text-gray-500 uppercase px-2 py-1">Categories</div>
+                    {searchSuggestions.categories.map((category) => (
+                      <button
+                        key={category._id}
+                        onClick={() => {
+                          router.push(`/${category.slug}`);
+                          closeAllMenus();
+                        }}
+                        className="w-full flex items-center gap-2 px-2 py-2 hover:bg-gray-50 rounded-lg text-left"
+                      >
+                        <Search className="w-4 h-4 text-gray-400" />
+                        <span className="text-sm text-gray-900">{category.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}

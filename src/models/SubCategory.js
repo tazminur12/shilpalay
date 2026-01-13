@@ -26,4 +26,10 @@ const SubCategorySchema = new mongoose.Schema({
   },
 }, { timestamps: true });
 
+// Indexes for better query performance
+SubCategorySchema.index({ slug: 1 });
+SubCategorySchema.index({ category: 1 });
+SubCategorySchema.index({ status: 1 });
+SubCategorySchema.index({ category: 1, status: 1 });
+
 export default mongoose.models.SubCategory || mongoose.model('SubCategory', SubCategorySchema);

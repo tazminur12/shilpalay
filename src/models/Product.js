@@ -195,9 +195,37 @@ const ProductSchema = new mongoose.Schema({
   suppressReservedKeysWarning: true,
 });
 
-// Index for better query performance
+// Indexes for better query performance
 ProductSchema.index({ category: 1 });
 ProductSchema.index({ status: 1 });
+ProductSchema.index({ slug: 1 });
+ProductSchema.index({ sku: 1 });
+// Text search index (MongoDB text index)
+ProductSchema.index({ 
+  name: 'text', 
+  'description.shortDescription': 'text', 
+  'description.fullDescription': 'text', 
+  brand: 'text',
+  tags: 'text',
+  sku: 'text'
+});
+ProductSchema.index({ 'flags.featured': 1 });
+ProductSchema.index({ 'flags.trending': 1 });
+ProductSchema.index({ 'flags.recommended': 1 });
+ProductSchema.index({ 'flags.whatsNew': 1 });
+ProductSchema.index({ 'flags.showOnHomepage': 1 });
+ProductSchema.index({ subCategory: 1 });
+ProductSchema.index({ childCategory: 1 });
+ProductSchema.index({ 'inventory.availability': 1 });
+ProductSchema.index({ createdAt: -1 });
+ProductSchema.index({ 'price.salePrice': 1 });
+ProductSchema.index({ 'price.regularPrice': 1 });
+// Compound indexes for common queries
+ProductSchema.index({ status: 1, category: 1 });
+ProductSchema.index({ status: 1, 'flags.featured': 1 });
+ProductSchema.index({ category: 1, status: 1, 'inventory.availability': 1 });
+ProductSchema.index({ status: 1, 'price.regularPrice': 1 });
+ProductSchema.index({ status: 1, 'price.salePrice': 1 });
 
 // Delete the model from cache if it exists to force recompilation
 if (mongoose.models.Product) {

@@ -3,9 +3,23 @@ import connectDB from '@/lib/db';
 import Category from '@/models/Category';
 import SubCategory from '@/models/SubCategory';
 import ChildCategory from '@/models/ChildCategory';
+import { getCache, setCache } from '@/lib/cache';
 
 export async function GET() {
   try {
+    // Check cache first (navigation changes infrequently)
+    const cacheKey = 'navigation';
+    const cached = getCache(cacheKey);
+    
+    if (cached) {
+      return NextResponse.json(cached, {
+        headers: {
+          'Cache-Control': 'public, s-maxage=600, stale-while-revalidate=1200',
+          'X-Cache': 'HIT',
+        },
+      });
+    }
+    
     await connectDB();
 
     // Fetch active categories
@@ -60,7 +74,16 @@ export async function GET() {
       };
     });
 
-    return NextResponse.json(navigation, { status: 200 });
+    // Cache for 10 minutes (navigation changes infrequently)
+    setCache(cacheKey, navigation, 600);
+    
+    return NextResponse.json(navigation, {
+      status: 200,
+      headers: {
+        'Cache-Control': 'public, s-maxage=600, stale-while-revalidate=1200',
+        'X-Cache': 'MISS',
+      },
+    });
   } catch (error) {
     console.error('Navigation API Error:', error);
     

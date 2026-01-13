@@ -29,4 +29,10 @@ const CategorySchema = new mongoose.Schema({
   },
 }, { timestamps: true });
 
+// Indexes for better query performance
+CategorySchema.index({ slug: 1 });
+CategorySchema.index({ status: 1 });
+CategorySchema.index({ sortOrder: 1 });
+CategorySchema.index({ status: 1, sortOrder: 1 });
+
 export default mongoose.models.Category || mongoose.model('Category', CategorySchema);
