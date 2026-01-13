@@ -157,10 +157,9 @@ const Sidebar = ({ onClose = () => {} }) => {
       icon: FileText,
       submenu: [
         { name: 'Banners', href: '/dashboard/banners', icon: Image },
-        { name: 'Sliders', href: '/dashboard/content/sliders', icon: Sliders },
         { name: 'Promotional Sections', href: '/dashboard/content/promotions', icon: Megaphone },
         { name: 'Blogs / Stories', href: '/dashboard/content/blogs', icon: BookOpen },
-        { name: 'Pages (About, Policies)', href: '/dashboard/page-content', icon: FileText }
+        { name: 'Pages (About, Policies)', href: '/dashboard/static-pages', icon: FileText }
       ]
     },
     { 
@@ -173,26 +172,26 @@ const Sidebar = ({ onClose = () => {} }) => {
         { name: 'Moderation', href: '/dashboard/reviews/moderation', icon: Eye }
       ]
     },
-    { 
-      name: 'Reports', 
-      href: '/dashboard/reports', 
-      icon: BarChart3,
-      submenu: [
-        { name: 'Sales Report', href: '/dashboard/reports/sales', icon: TrendingUp },
-        { name: 'Inventory Report', href: '/dashboard/reports/inventory', icon: Box },
-        { name: 'Customer Report', href: '/dashboard/reports/customers', icon: Users },
-        { name: 'Export', href: '/dashboard/reports/export', icon: Download }
-      ]
-    },
-    { 
-      name: 'Stores / Outlets', 
-      href: '/dashboard/stores', 
-      icon: Store,
-      submenu: [
-        { name: 'Store List', href: '/dashboard/stores', icon: List },
-        { name: 'Stock Management', href: '/dashboard/stores/stock', icon: Warehouse }
-      ]
-    },
+    // { 
+    //   name: 'Reports', 
+    //   href: '/dashboard/reports', 
+    //   icon: BarChart3,
+    //   submenu: [
+    //     { name: 'Sales Report', href: '/dashboard/reports/sales', icon: TrendingUp },
+    //     { name: 'Inventory Report', href: '/dashboard/reports/inventory', icon: Box },
+    //     { name: 'Customer Report', href: '/dashboard/reports/customers', icon: Users },
+    //     { name: 'Export', href: '/dashboard/reports/export', icon: Download }
+    //   ]
+    // },
+    // { 
+    //   name: 'Stores / Outlets', 
+    //   href: '/dashboard/stores', 
+    //   icon: Store,
+    //   submenu: [
+    //     { name: 'Store List', href: '/dashboard/stores', icon: List },
+    //     { name: 'Stock Management', href: '/dashboard/stores/stock', icon: Warehouse }
+    //   ]
+    // },
     { 
       name: 'Admin & Roles', 
       href: '/dashboard/admin', 
