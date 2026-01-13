@@ -49,7 +49,7 @@ const CategoryGrid = () => {
       <div className="max-w-[1920px] mx-auto px-4 lg:px-8">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {categories.map((cat) => (
-            <Link key={cat._id} href={`/category/${cat.slug}`} className="group block">
+            <Link key={cat._id} href={`/${cat.slug}`} className="group block">
               <div className="relative aspect-[3/4] overflow-hidden mb-3">
                 {cat.image ? (
                   <Image

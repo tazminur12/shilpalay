@@ -105,11 +105,11 @@ const PageLayout = ({ pageContent, categoryId, categorySlug }) => {
           </h2>
           <div className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 ${categoryId ? 'xl:grid-cols-5' : 'xl:grid-cols-4'} gap-4 md:gap-6`}>
             {itemsToShow.map((item) => {
-              // For homepage: link to main category products page
-              // For category pages: link to subcategory products page (using subcategory slug)
+              // For homepage: link to main category page (PageLayout)
+              // For category pages: link to subcategory page (product listing)
               const categoryLinkHref = categoryId 
-                ? `/category/${item.slug}/products`  // Subcategory products page
-                : `/category/${item.slug}/products`;  // Main category products page
+                ? `/category/${categorySlug}/${item.slug}`  // Subcategory product listing page
+                : `/${item.slug}`;  // Main category PageLayout
               
               return (
                 <Link
@@ -355,8 +355,8 @@ const PageLayout = ({ pageContent, categoryId, categorySlug }) => {
       {categoryId ? <CategoryBanner categoryId={categoryId} /> : renderHero()}
       {renderCategoryGrid()}
       {renderFeaturedCollections()}
-      <RecommendedProducts />
-      <TrendingProducts />
+      <RecommendedProducts categoryId={categoryId} />
+      <TrendingProducts categoryId={categoryId} />
       {renderPromoBanner()}
       {renderTwoColumnBanners()}
       {renderNewsletter()}

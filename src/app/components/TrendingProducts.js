@@ -5,7 +5,7 @@ import SimpleProductCard from './SimpleProductCard';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 
-const TrendingProducts = () => {
+const TrendingProducts = ({ categoryId = null }) => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -13,11 +13,16 @@ const TrendingProducts = () => {
 
   useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [categoryId]);
 
   const fetchProducts = async () => {
     try {
-      const res = await fetch('/api/admin/products?status=published&trending=true');
+      let url = '/api/admin/products?status=published&trending=true';
+      // Filter by category if categoryId is provided
+      if (categoryId) {
+        url += `&category=${categoryId}`;
+      }
+      const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
         setProducts(Array.isArray(data) ? data : []);

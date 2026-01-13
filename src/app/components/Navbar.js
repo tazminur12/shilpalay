@@ -18,6 +18,7 @@ const Navbar = () => {
   const [expandedCategories, setExpandedCategories] = useState({});
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [cartCount, setCartCount] = useState(0);
+  const hoverTimeoutRef = useRef(null);
   
   const { data: session } = useSession();
   const router = useRouter();
@@ -27,6 +28,16 @@ const Navbar = () => {
   const moreMenuRef = useRef(null);
   const categoryMenuRef = useRef(null);
   const mobileSearchRef = useRef(null);
+  const megaMenuRef = useRef(null);
+
+  // Clear timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // ১. বাইরে ক্লিক করলে মেনু বন্ধ করা
   useEffect(() => {
@@ -40,13 +51,41 @@ const Navbar = () => {
       if (moreMenuRef.current && !moreMenuRef.current.contains(event.target)) {
         setIsMoreMenuOpen(false);
       }
-      if (categoryMenuRef.current && !categoryMenuRef.current.contains(event.target)) {
+      const isInsideCategoryMenu = categoryMenuRef.current?.contains(event.target);
+      const isInsideMegaMenu = megaMenuRef.current?.contains(event.target);
+      if (!isInsideCategoryMenu && !isInsideMegaMenu) {
         setHoveredCategory(null);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Handle hover with delay
+  const handleCategoryMouseEnter = (categoryId) => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+    }
+    setHoveredCategory(categoryId);
+  };
+
+  const handleCategoryMouseLeave = () => {
+    hoverTimeoutRef.current = setTimeout(() => {
+      setHoveredCategory(null);
+    }, 200); // 200ms delay before closing
+  };
+
+  const handleMegaMenuMouseEnter = () => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+    }
+  };
+
+  const handleMegaMenuMouseLeave = () => {
+    hoverTimeoutRef.current = setTimeout(() => {
+      setHoveredCategory(null);
+    }, 200);
+  };
 
   // মোবাইল সার্চ ইনপুট ফোকাস
   useEffect(() => {
@@ -277,38 +316,49 @@ const Navbar = () => {
                   <div
                     key={category._id}
                     className="relative"
-                    onMouseEnter={() => setHoveredCategory(category._id)}
-                    onMouseLeave={() => setHoveredCategory(null)}
+                    onMouseEnter={() => handleCategoryMouseEnter(category._id)}
+                    onMouseLeave={handleCategoryMouseLeave}
                   >
                     <Link 
-                      href={`/category/${category.slug}`}
-                      className="text-[15px] hover:text-orange-600 transition-colors tracking-tight whitespace-nowrap"
+                      href={`/${category.slug}`}
+                      className="text-[15px] hover:text-orange-600 transition-colors tracking-tight whitespace-nowrap py-2 block"
                     >
                       {category.name}
                     </Link>
                     
                     {hoveredCategory === category._id && category.sections && category.sections.length > 0 && (
-                      <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 shadow-lg rounded-md py-4 z-50 min-w-[600px] max-w-[900px]">
-                        <div className="grid grid-cols-4 gap-6 px-6">
-                          {category.sections.map((section, idx) => (
-                            <div key={idx} className="flex flex-col">
-                              <h4 className="font-semibold text-gray-900 mb-3 text-sm uppercase tracking-wide">
-                                {section.title}
-                              </h4>
-                              <ul className="space-y-2">
-                                {section.items?.map((item, itemIdx) => (
-                                  <li key={itemIdx}>
-                                    <Link
-                                      href={`/category/${category.slug}/${item.slug}`}
-                                      className="text-sm text-gray-600 hover:text-orange-600 transition-colors"
-                                    >
-                                      {item.label}
-                                    </Link>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          ))}
+                      <div 
+                        ref={megaMenuRef}
+                        className="absolute top-full left-0 pt-2 bg-transparent z-50"
+                        onMouseEnter={handleMegaMenuMouseEnter}
+                        onMouseLeave={handleMegaMenuMouseLeave}
+                        style={{ pointerEvents: 'auto' }}
+                      >
+                        <div className="bg-white border border-gray-200 shadow-xl rounded-md py-6 min-w-[800px] max-w-[1200px]">
+                          <div className="grid grid-cols-4 gap-8 px-8">
+                            {category.sections.map((section, idx) => (
+                              <div key={idx} className="flex flex-col">
+                                <Link
+                                  href={`/category/${category.slug}/${section.slug || section.title.toLowerCase().replace(/\s+/g, '-')}`}
+                                  className="font-bold text-gray-900 mb-4 text-sm uppercase tracking-wider hover:text-orange-600 transition-colors block"
+                                >
+                                  {section.title}
+                                </Link>
+                                <ul className="space-y-2.5">
+                                  {section.items?.map((item, itemIdx) => (
+                                    <li key={itemIdx}>
+                                      <Link
+                                        href={`/category/${category.slug}/${section.slug || section.title.toLowerCase().replace(/\s+/g, '-')}/${item.slug}`}
+                                        className="text-sm text-gray-600 hover:text-orange-600 transition-colors block py-1"
+                                      >
+                                        {item.label}
+                                      </Link>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       </div>
                     )}
@@ -345,7 +395,7 @@ const Navbar = () => {
               {navigation.map((category) => (
                 <div key={category._id} className="border-b border-gray-50 pb-2">
                   <div className="flex items-center justify-between">
-                    <Link href={`/category/${category.slug}`} onClick={closeAllMenus} className="text-[13px] font-normal text-gray-800 uppercase tracking-wide flex-1">
+                    <Link href={`/${category.slug}`} onClick={closeAllMenus} className="text-[13px] font-normal text-gray-800 uppercase tracking-wide flex-1">
                       {category.name}
                     </Link>
                     {category.sections?.length > 0 && (
@@ -356,9 +406,20 @@ const Navbar = () => {
                   </div>
                   {expandedCategories[category._id] && category.sections?.map((section, sIdx) => (
                     <div key={sIdx} className="mt-2 ml-4 space-y-1">
-                      <div className="text-[12px] font-semibold text-gray-700 uppercase">{section.title}</div>
+                      <Link 
+                        href={`/category/${category.slug}/${section.slug || section.title.toLowerCase().replace(/\s+/g, '-')}`} 
+                        onClick={closeAllMenus} 
+                        className="block text-[12px] font-semibold text-gray-700 uppercase hover:text-orange-600 transition-colors"
+                      >
+                        {section.title}
+                      </Link>
                       {section.items?.map((item, iIdx) => (
-                        <Link key={iIdx} href={`/category/${category.slug}/${item.slug}`} onClick={closeAllMenus} className="block text-[12px] text-gray-600 py-1">
+                        <Link 
+                          key={iIdx} 
+                          href={`/category/${category.slug}/${section.slug || section.title.toLowerCase().replace(/\s+/g, '-')}/${item.slug}`} 
+                          onClick={closeAllMenus} 
+                          className="block text-[12px] text-gray-600 py-1 hover:text-orange-600 transition-colors ml-2"
+                        >
                           {item.label}
                         </Link>
                       ))}

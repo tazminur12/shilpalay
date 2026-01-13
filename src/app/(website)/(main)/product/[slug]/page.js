@@ -4,7 +4,7 @@ import { useState, useEffect, use } from 'react';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Heart, ShoppingBag, Share2, Minus, Plus, Truck, Shield, RotateCcw, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Heart, ShoppingBag, Share2, Minus, Plus, Truck, Shield, RotateCcw, ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, Play, Maximize2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Swal from 'sweetalert2';
 import { addToCart } from '@/lib/cart';
@@ -21,6 +21,37 @@ export default function ProductDetailPage({ params: routeParams }) {
   const [selectedVariation, setSelectedVariation] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0, clientX: 0, clientY: 0 });
+  const [isZooming, setIsZooming] = useState(false);
+  const [imageRef, setImageRef] = useState(null);
+  const [isMobileViewerOpen, setIsMobileViewerOpen] = useState(false);
+  const [mobileZoom, setMobileZoom] = useState(1);
+  const [mobileImagePosition, setMobileImagePosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [isMobile, setIsMobile] = useState(false);
+  const [swipeStart, setSwipeStart] = useState({ x: 0, y: 0 });
+  const [isSwiping, setIsSwiping] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  useEffect(() => {
+    if (isMobileViewerOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isMobileViewerOpen]);
 
   useEffect(() => {
     if (slug) {
@@ -160,6 +191,93 @@ export default function ProductDetailPage({ params: routeParams }) {
     }
   };
 
+  const handleImageClick = () => {
+    // Only open mobile viewer on mobile devices
+    if (isMobile) {
+      setIsMobileViewerOpen(true);
+      setMobileZoom(1);
+      setMobileImagePosition({ x: 0, y: 0 });
+    }
+  };
+
+  const handleMobileZoomIn = () => {
+    setMobileZoom(prev => Math.min(prev + 0.5, 3));
+  };
+
+  const handleMobileZoomOut = () => {
+    setMobileZoom(prev => {
+      const newZoom = Math.max(prev - 0.5, 1);
+      if (newZoom === 1) {
+        setMobileImagePosition({ x: 0, y: 0 });
+      }
+      return newZoom;
+    });
+  };
+
+  const handleMobileImageDragStart = (e) => {
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    
+    setSwipeStart({ x: clientX, y: clientY });
+    setIsSwiping(true);
+    
+    if (mobileZoom > 1) {
+      setIsDragging(true);
+      setDragStart({
+        x: clientX - mobileImagePosition.x,
+        y: clientY - mobileImagePosition.y
+      });
+    }
+  };
+
+  const handleMobileImageDrag = (e) => {
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    
+    if (isDragging && mobileZoom > 1) {
+      const maxX = (window.innerWidth * (mobileZoom - 1)) / 2;
+      const maxY = (window.innerHeight * (mobileZoom - 1)) / 2;
+      
+      setMobileImagePosition({
+        x: Math.max(-maxX, Math.min(maxX, clientX - dragStart.x)),
+        y: Math.max(-maxY, Math.min(maxY, clientY - dragStart.y))
+      });
+    }
+  };
+
+  const handleMobileImageDragEnd = (e) => {
+    if (isSwiping && mobileZoom === 1) {
+      const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+      const clientY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
+      const deltaX = clientX - swipeStart.x;
+      const deltaY = clientY - swipeStart.y;
+      
+      // Horizontal swipe (more than vertical) to change images
+      if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
+        if (deltaX > 0) {
+          handlePrevImage();
+        } else {
+          handleNextImage();
+        }
+      }
+    }
+    
+    setIsDragging(false);
+    setIsSwiping(false);
+  };
+
+  const handleNextImage = () => {
+    setSelectedImageIndex((selectedImageIndex + 1) % images.length);
+    setMobileZoom(1);
+    setMobileImagePosition({ x: 0, y: 0 });
+  };
+
+  const handlePrevImage = () => {
+    setSelectedImageIndex((selectedImageIndex - 1 + images.length) % images.length);
+    setMobileZoom(1);
+    setMobileImagePosition({ x: 0, y: 0 });
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-white py-12 flex items-center justify-center">
@@ -197,6 +315,7 @@ export default function ProductDetailPage({ params: routeParams }) {
   const discount = originalPrice ? ((originalPrice - displayPrice) / originalPrice * 100).toFixed(0) : 0;
 
   return (
+    <>
     <div className="min-h-screen bg-white">
       {/* Breadcrumb */}
       <div className="bg-white border-b border-gray-200 py-3">
@@ -206,7 +325,7 @@ export default function ProductDetailPage({ params: routeParams }) {
             {product.category && (
               <>
                 <span className="mx-2">/</span>
-                <Link href={`/category/${product.category.slug}`} className="hover:text-black transition-colors">
+                <Link href={`/${product.category.slug}`} className="hover:text-black transition-colors">
                   {product.category.name}
                 </Link>
               </>
@@ -229,79 +348,128 @@ export default function ProductDetailPage({ params: routeParams }) {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
           {/* Left Column - Images */}
           <div className="flex flex-col items-center">
-            {/* Main Image Container */}
-            <div className="relative w-full max-w-md">
-              {/* Main Image */}
-              <div className="relative aspect-[3/4] bg-gray-100 rounded overflow-hidden mb-4">
-                {images[selectedImageIndex] ? (
-                  <Image
-                    src={images[selectedImageIndex]}
-                    alt={product.name}
-                    fill
-                    className="object-cover"
-                    priority
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                    <span className="text-gray-400">No Image</span>
-                  </div>
-                )}
-                
-                {/* Wishlist Button */}
+            {/* Main Image Container with Arrows Outside */}
+            <div className="relative w-full max-w-md flex items-center">
+              {/* Left Arrow - Outside Image Container */}
+              {images.length > 1 && (
                 <button
-                  onClick={handleWishlist}
-                  className="absolute top-3 right-3 p-1.5 bg-white/90 hover:bg-white rounded-full transition-colors z-10 shadow-sm"
-                  aria-label="Add to wishlist"
+                  onClick={() => setSelectedImageIndex((selectedImageIndex - 1 + images.length) % images.length)}
+                  className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-12 lg:-translate-x-14 w-10 h-10 flex items-center justify-center bg-white/95 hover:bg-white backdrop-blur-sm rounded-full shadow-lg hover:shadow-xl transition-all duration-300 z-20 group border border-gray-200/50"
+                  aria-label="Previous image"
                 >
-                  <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-red-500 text-red-500' : 'text-gray-600'}`} />
+                  <ChevronLeft className="w-5 h-5 text-gray-800 group-hover:text-black transition-colors" strokeWidth={2.5} />
                 </button>
+              )}
 
-                {/* Sale Badge */}
-                {originalPrice && (
-                  <div className="absolute top-3 left-3 bg-red-500 text-white text-[10px] px-2 py-0.5 rounded font-medium">
-                    {discount}% OFF
-                  </div>
-                )}
-
-                {/* Left Arrow */}
-                {images.length > 1 && (
+              {/* Main Image - Separate Container */}
+              <div className="relative w-full">
+                <div 
+                  className="relative aspect-[3/4] bg-gray-100 rounded overflow-hidden mb-4 cursor-pointer lg:cursor-default"
+                  style={{ cursor: isZooming ? 'none' : (isMobile ? 'pointer' : 'default') }}
+                  onClick={handleImageClick}
+                  onMouseMove={(e) => {
+                    if (isMobile) return;
+                    if (!imageRef) return;
+                    const rect = imageRef.getBoundingClientRect();
+                    const x = ((e.clientX - rect.left) / rect.width) * 100;
+                    const y = ((e.clientY - rect.top) / rect.height) * 100;
+                    setZoomPosition({ 
+                      x: Math.max(0, Math.min(100, x)), 
+                      y: Math.max(0, Math.min(100, y)),
+                      clientX: e.clientX,
+                      clientY: e.clientY
+                    });
+                  }}
+                  onMouseEnter={() => {
+                    if (!isMobile) {
+                      setIsZooming(true);
+                    }
+                  }}
+                  onMouseLeave={() => setIsZooming(false)}
+                  ref={setImageRef}
+                >
+                  {images[selectedImageIndex] ? (
+                    <>
+                      <Image
+                        src={images[selectedImageIndex]}
+                        alt={product.name}
+                        fill
+                        className="object-cover"
+                        priority
+                      />
+                      {/* Zoom Overlay */}
+                      {isZooming && (
+                        <div 
+                          className="fixed pointer-events-none z-50 rounded-full overflow-hidden border-2 border-white shadow-2xl"
+                          style={{
+                            width: '200px',
+                            height: '200px',
+                            left: `${zoomPosition.clientX}px`,
+                            top: `${zoomPosition.clientY}px`,
+                            transform: 'translate(-50%, -50%)',
+                            backgroundImage: `url(${images[selectedImageIndex]})`,
+                            backgroundSize: '400%',
+                            backgroundPosition: `${zoomPosition.x}% ${zoomPosition.y}%`,
+                            backgroundRepeat: 'no-repeat',
+                            boxShadow: '0 0 20px rgba(0,0,0,0.3)'
+                          }}
+                        />
+                      )}
+                    </>
+                  ) : (
+                    <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                      <span className="text-gray-400">No Image</span>
+                    </div>
+                  )}
+                  
+                  {/* Wishlist Button */}
                   <button
-                    onClick={() => setSelectedImageIndex((selectedImageIndex - 1 + images.length) % images.length)}
-                    className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 p-2 bg-white hover:bg-gray-50 rounded-full shadow-md transition-colors z-10"
-                    aria-label="Previous image"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleWishlist();
+                    }}
+                    className="absolute top-3 right-3 p-1.5 bg-white/90 hover:bg-white rounded-full transition-colors z-10 shadow-sm"
+                    aria-label="Add to wishlist"
                   >
-                    <ChevronLeft className="w-5 h-5 text-gray-800" />
+                    <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-red-500 text-red-500' : 'text-gray-600'}`} />
                   </button>
-                )}
 
-                {/* Right Arrow */}
-                {images.length > 1 && (
-                  <button
-                    onClick={() => setSelectedImageIndex((selectedImageIndex + 1) % images.length)}
-                    className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 p-2 bg-white hover:bg-gray-50 rounded-full shadow-md transition-colors z-10"
-                    aria-label="Next image"
-                  >
-                    <ChevronRight className="w-5 h-5 text-gray-800" />
-                  </button>
-                )}
+                  {/* Sale Badge */}
+                  {originalPrice && (
+                    <div className="absolute top-3 left-3 bg-red-500 text-white text-[10px] px-2 py-0.5 rounded font-medium z-10">
+                      {discount}% OFF
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {/* Pagination Dots */}
+              {/* Right Arrow - Outside Image Container */}
               {images.length > 1 && (
-                <div className="flex items-center justify-center gap-2">
-                  {images.map((_, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setSelectedImageIndex(index)}
-                      className={`w-2 h-2 rounded-full transition-colors ${
-                        selectedImageIndex === index ? 'bg-orange-500' : 'bg-gray-400'
-                      }`}
-                      aria-label={`Go to image ${index + 1}`}
-                    />
-                  ))}
-                </div>
+                <button
+                  onClick={() => setSelectedImageIndex((selectedImageIndex + 1) % images.length)}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-12 lg:translate-x-14 w-10 h-10 flex items-center justify-center bg-white/95 hover:bg-white backdrop-blur-sm rounded-full shadow-lg hover:shadow-xl transition-all duration-300 z-20 group border border-gray-200/50"
+                  aria-label="Next image"
+                >
+                  <ChevronRight className="w-5 h-5 text-gray-800 group-hover:text-black transition-colors" strokeWidth={2.5} />
+                </button>
               )}
             </div>
+
+            {/* Pagination Dots */}
+            {images.length > 1 && (
+              <div className="flex items-center justify-center gap-2 mb-4">
+                {images.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setSelectedImageIndex(index)}
+                    className={`w-2 h-2 rounded-full transition-colors ${
+                      selectedImageIndex === index ? 'bg-orange-500' : 'bg-gray-400'
+                    }`}
+                    aria-label={`Go to image ${index + 1}`}
+                  />
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Right Column - Product Info */}
@@ -516,6 +684,123 @@ export default function ProductDetailPage({ params: routeParams }) {
           </div>
         </div>
       </div>
+
+      {/* Mobile Image Viewer Modal */}
+      {isMobileViewerOpen && (
+        <div 
+          className="fixed inset-0 bg-black z-[100] lg:hidden"
+          onClick={() => setIsMobileViewerOpen(false)}
+        >
+          {/* Top Control Bar */}
+          <div className="absolute top-0 left-0 right-0 bg-black/80 backdrop-blur-sm z-10 flex items-center justify-between px-4 py-3">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleMobileZoomOut();
+                }}
+                className="p-2 text-white hover:bg-white/20 rounded transition-colors"
+                aria-label="Zoom out"
+              >
+                <ZoomOut className="w-5 h-5" />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleMobileZoomIn();
+                }}
+                className="p-2 text-white hover:bg-white/20 rounded transition-colors"
+                aria-label="Zoom in"
+              >
+                <ZoomIn className="w-5 h-5" />
+              </button>
+            </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsMobileViewerOpen(false);
+              }}
+              className="p-2 text-white hover:bg-white/20 rounded transition-colors"
+              aria-label="Close"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+
+          {/* Image Container */}
+          <div 
+            className="absolute inset-0 flex items-center justify-center overflow-hidden"
+            onTouchStart={handleMobileImageDragStart}
+            onTouchMove={handleMobileImageDrag}
+            onTouchEnd={handleMobileImageDragEnd}
+            onMouseDown={handleMobileImageDragStart}
+            onMouseMove={handleMobileImageDrag}
+            onMouseUp={handleMobileImageDragEnd}
+            onMouseLeave={handleMobileImageDragEnd}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {images[selectedImageIndex] && (
+              <div
+                className="relative w-full h-full flex items-center justify-center"
+                style={{
+                  transform: `scale(${mobileZoom}) translate(${mobileImagePosition.x / mobileZoom}px, ${mobileImagePosition.y / mobileZoom}px)`,
+                  transition: isDragging ? 'none' : 'transform 0.3s ease-out'
+                }}
+              >
+                <Image
+                  src={images[selectedImageIndex]}
+                  alt={product.name}
+                  fill
+                  className="object-contain"
+                  priority
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Navigation Arrows */}
+          {images.length > 1 && (
+            <>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handlePrevImage();
+                }}
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-12 h-12 flex items-center justify-center bg-black/60 hover:bg-black/80 backdrop-blur-sm text-white rounded-full shadow-xl hover:shadow-2xl transition-all duration-300 z-10 group"
+                aria-label="Previous image"
+              >
+                <ChevronLeft className="w-6 h-6 group-hover:scale-110 transition-transform" strokeWidth={2.5} />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleNextImage();
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-12 h-12 flex items-center justify-center bg-black/60 hover:bg-black/80 backdrop-blur-sm text-white rounded-full shadow-xl hover:shadow-2xl transition-all duration-300 z-10 group"
+                aria-label="Next image"
+              >
+                <ChevronRight className="w-6 h-6 group-hover:scale-110 transition-transform" strokeWidth={2.5} />
+              </button>
+            </>
+          )}
+
+          {/* Bottom Indicator */}
+          {images.length > 1 && (
+            <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-2 z-10">
+              {images.map((_, index) => (
+                <div
+                  key={index}
+                  className={`h-1.5 rounded-full transition-all ${
+                    selectedImageIndex === index ? 'bg-white w-6' : 'bg-white/50 w-1.5'
+                  }`}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
+    </>
   );
 }
