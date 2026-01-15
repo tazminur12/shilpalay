@@ -197,7 +197,7 @@ const Sidebar = ({ onClose = () => {} }) => {
       href: '/dashboard/admin', 
       icon: UserCog,
       submenu: [
-        { name: 'Admin Users', href: '/dashboard/admin/users', icon: Users },
+        // { name: 'Admin Users', href: '/dashboard/admin/users', icon: Users },
         { name: 'Roles & Permissions', href: '/dashboard/settings/roles', icon: ShieldCheck }
       ]
     },
