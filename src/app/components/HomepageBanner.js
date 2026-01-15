@@ -32,9 +32,9 @@ const HomepageBanner = () => {
 
   if (loading) {
     return (
-      <section className="relative w-full h-[60vh] md:h-screen overflow-hidden bg-gray-100 flex items-center justify-center">
+      <div className="relative w-full h-[60vh] md:h-[80vh] bg-gray-100 flex items-center justify-center">
         <div className="text-gray-400">Loading...</div>
-      </section>
+      </div>
     );
   }
 
@@ -46,36 +46,41 @@ const HomepageBanner = () => {
   const banner = banners[0];
 
   return (
-    <section className="relative w-full h-[60vh] md:h-screen overflow-hidden group">
-      {banner.image ? (
-        <Image 
-          src={banner.image}
-          alt={banner.title || 'Homepage Banner'}
-          fill
-          className="object-cover"
-        />
-      ) : (
-        <div className="w-full h-full bg-gray-200"></div>
-      )}
-      <div className="absolute inset-0 bg-black/10"></div>
+    <div className="relative w-full h-[60vh] md:h-[80vh] bg-gray-100 overflow-hidden">
+      {/* Background Image */}
+      <div className="absolute inset-0">
+        {banner.image ? (
+          <Image 
+            src={banner.image}
+            alt={banner.title || 'Homepage Banner'}
+            fill
+            className="object-cover object-center"
+            priority
+          />
+        ) : (
+          <div className="w-full h-full bg-gray-200"></div>
+        )}
+        {/* Overlay gradient */}
+        <div className="absolute inset-0 bg-black/20"></div>
+      </div>
+
+      {/* Content */}
       {banner.title && (
         <div className="absolute inset-0 flex flex-col items-center justify-center text-white text-center px-4 z-10">
-          <h2 className="text-4xl md:text-6xl font-bold mb-4 drop-shadow-lg">
+          <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-2 drop-shadow-md">
             {banner.title}
           </h2>
-          {banner.link ? (
+          {banner.link && (
             <Link 
               href={banner.link}
               className="bg-white text-black px-10 py-3 text-sm uppercase tracking-widest font-bold hover:bg-gray-200 transition-colors inline-block mt-4"
             >
               Shop Now
             </Link>
-          ) : (
-            null
           )}
         </div>
       )}
-    </section>
+    </div>
   );
 };
 
