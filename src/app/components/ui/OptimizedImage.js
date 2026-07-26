@@ -2,10 +2,14 @@
 
 import Image from 'next/image';
 import { useState } from 'react';
+import { cloudinaryLoader, getResponsiveSizes } from '@/lib/cdn';
+
+const BLUR_DATA_URL =
+  'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q==';
 
 /**
- * Optimized Image Component
- * Wrapper around Next.js Image with better defaults and loading states
+ * Optimized Image — Cloudinary CDN transforms + Next.js responsive srcSet.
+ * Hero/LCP images: pass priority. Below-fold: lazy by default.
  */
 export default function OptimizedImage({
   src,
@@ -15,80 +19,56 @@ export default function OptimizedImage({
   fill = false,
   priority = false,
   sizes,
+  sizePreset,
   className = '',
-  quality = 85,
-  loading = 'lazy',
+  quality = 75,
   placeholder = 'blur',
   blurDataURL,
   onError,
   ...props
 }) {
-  const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
 
-  // Generate default sizes if not provided
-  const defaultSizes = sizes || '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw';
-
-  // Generate blur placeholder if not provided
-  const defaultBlurDataURL = blurDataURL || 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q==';
-
-  const handleLoad = () => {
-    setIsLoading(false);
-  };
-
-  const handleError = (e) => {
-    setIsLoading(false);
-    setHasError(true);
-    if (onError) {
-      onError(e);
-    }
-  };
-
-  if (hasError) {
+  if (!src || hasError) {
     return (
-      <div 
-        className={`bg-gray-200 flex items-center justify-center ${className}`}
-        style={fill ? {} : { width, height }}
+      <div
+        className={`bg-gray-100 flex items-center justify-center ${className}`}
+        style={fill ? undefined : { width, height }}
         role="img"
-        aria-label={alt || 'Image failed to load'}
+        aria-label={alt || 'Image not available'}
       >
         <span className="text-gray-400 text-xs">Image not available</span>
       </div>
     );
   }
 
+  const isCloudinary = typeof src === 'string' && src.includes('res.cloudinary.com');
+  const resolvedSizes = sizes || getResponsiveSizes(sizePreset || 'default');
+
+  const handleError = (e) => {
+    setHasError(true);
+    onError?.(e);
+  };
+
   const imageProps = {
     src,
     alt: alt || '',
-    className: `${className} ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`,
-    onLoad: handleLoad,
+    className,
     onError: handleError,
     quality,
-    loading: priority ? undefined : loading,
-    priority,
+    sizes: resolvedSizes,
+    placeholder,
+    blurDataURL: blurDataURL || BLUR_DATA_URL,
+    ...(isCloudinary ? { loader: cloudinaryLoader } : {}),
+    ...(priority
+      ? { priority: true, fetchPriority: 'high' }
+      : { loading: 'lazy', decoding: 'async' }),
     ...props,
   };
 
   if (fill) {
-    return (
-      <Image
-        {...imageProps}
-        fill
-        sizes={defaultSizes}
-        placeholder={placeholder}
-        blurDataURL={defaultBlurDataURL}
-      />
-    );
+    return <Image {...imageProps} fill />;
   }
 
-  return (
-    <Image
-      {...imageProps}
-      width={width}
-      height={height}
-      sizes={defaultSizes}
-      placeholder={placeholder}
-      blurDataURL={defaultBlurDataURL}
-    />
-  );
+  return <Image {...imageProps} width={width} height={height} />;
 }

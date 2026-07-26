@@ -5,20 +5,24 @@ import SimpleProductCard from './SimpleProductCard';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 
-const WhatsNewProducts = ({ categoryId = null }) => {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+const WhatsNewProducts = ({ categoryId = null, products: initialProducts = null }) => {
+  const [products, setProducts] = useState(initialProducts || []);
+  const [loading, setLoading] = useState(!initialProducts);
   const [currentIndex, setCurrentIndex] = useState(0);
   const productsPerPage = 4;
 
   useEffect(() => {
+    if (initialProducts && !categoryId) {
+      setProducts(initialProducts);
+      setLoading(false);
+      return;
+    }
     fetchProducts();
-  }, [categoryId]);
+  }, [categoryId, initialProducts]);
 
   const fetchProducts = async () => {
     try {
       let url = '/api/admin/products?status=published&whatsNew=true';
-      // Filter by category if categoryId is provided
       if (categoryId) {
         url += `&category=${categoryId}`;
       }
@@ -28,7 +32,7 @@ const WhatsNewProducts = ({ categoryId = null }) => {
         setProducts(Array.isArray(data) ? data : []);
       }
     } catch (error) {
-      console.error('Error fetching what\'s new products:', error);
+      console.error("Error fetching what's new products:", error);
     } finally {
       setLoading(false);
     }
@@ -36,15 +40,17 @@ const WhatsNewProducts = ({ categoryId = null }) => {
 
   const nextSlide = () => {
     if (products.length <= productsPerPage) return;
-    setCurrentIndex((prev) => 
+    setCurrentIndex((prev) =>
       prev + productsPerPage >= products.length ? 0 : prev + productsPerPage
     );
   };
 
   const prevSlide = () => {
     if (products.length <= productsPerPage) return;
-    setCurrentIndex((prev) => 
-      prev - productsPerPage < 0 ? Math.floor((products.length - 1) / productsPerPage) * productsPerPage : prev - productsPerPage
+    setCurrentIndex((prev) =>
+      prev - productsPerPage < 0
+        ? Math.floor((products.length - 1) / productsPerPage) * productsPerPage
+        : prev - productsPerPage
     );
   };
 
@@ -52,7 +58,11 @@ const WhatsNewProducts = ({ categoryId = null }) => {
     return (
       <section className="py-12 bg-white">
         <div className="max-w-[1920px] mx-auto px-4 lg:px-8">
-          <div className="text-center text-gray-400">Loading what's new...</div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="aspect-[3/4] bg-gray-100 animate-pulse" />
+            ))}
+          </div>
         </div>
       </section>
     );
@@ -69,7 +79,7 @@ const WhatsNewProducts = ({ categoryId = null }) => {
     <section className="py-12 bg-white">
       <div className="max-w-[1920px] mx-auto px-4 lg:px-8">
         <h2 className="text-2xl font-bold text-center mb-10 uppercase tracking-wide">
-          WHAT'S NEW
+          WHAT&apos;S NEW
         </h2>
         <div className="relative px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

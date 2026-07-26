@@ -6,31 +6,40 @@ import Newsletter from "../../components/Newsletter";
 import HomepageBanner from "../../components/HomepageBanner";
 import OfferBanner from "../../components/OfferBanner";
 import FeaturedBanners from "../../components/FeaturedBanners";
+import { getHomepageData, filterBannersByPosition } from "@/lib/homepageData";
 
-export default function Home() {
+export default async function Home() {
+  const { banners, categories, whatsNewProducts } = await getHomepageData();
+
+  const heroBanners = filterBannersByPosition(banners, 'Homepage Hero');
+  const featuredCollections = filterBannersByPosition(banners, 'Featured Collection', 2);
+  const homepageBanners = filterBannersByPosition(banners, 'Homepage Banner');
+  const offerBanners = filterBannersByPosition(banners, 'Offer Banner');
+  const featuredBanners = filterBannersByPosition(banners, 'Featured Banner', 2);
+
   return (
     <main className="min-h-screen bg-white overflow-x-hidden">
-      <Hero />
+      <Hero banners={heroBanners} />
       <div className="py-2 md:py-3">
-        <CategoryGrid />
+        <CategoryGrid categories={categories} />
       </div>
       <div className="py-2 md:py-3">
-        <FeaturedCollections />
+        <FeaturedCollections banners={featuredCollections} />
       </div>
       <div className="py-2 md:py-3">
-        <WhatsNewProducts />
+        <WhatsNewProducts products={whatsNewProducts} />
       </div>
-      
+
       <div className="py-2 md:py-3">
-        <HomepageBanner />
+        <HomepageBanner banners={homepageBanners} />
       </div>
-      
+
       <div className="py-2 md:py-3">
-        <OfferBanner />
+        <OfferBanner banners={offerBanners} />
       </div>
-      
-      <FeaturedBanners />
-      
+
+      <FeaturedBanners banners={featuredBanners} />
+
       <div className="py-2 md:py-3">
         <Newsletter />
       </div>

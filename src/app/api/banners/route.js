@@ -64,7 +64,11 @@ export async function GET(req) {
     }));
     
     // Always return an array
-    return NextResponse.json(Array.isArray(bannersData) ? bannersData : []);
+    return NextResponse.json(Array.isArray(bannersData) ? bannersData : [], {
+      headers: {
+        'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=300',
+      },
+    });
   } catch (error) {
     return NextResponse.json([], { status: 200 });
   }
