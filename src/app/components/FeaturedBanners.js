@@ -24,8 +24,7 @@ const FeaturedBanners = ({ banners: initialBanners = null }) => {
         const data = await res.json();
         const featuredBanners = data
           .filter((banner) => banner.status === 'Active' && banner.position === 'Featured Banner')
-          .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
-          .slice(0, 2);
+          .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
         setBanners(featuredBanners);
       }
     } catch (error) {
@@ -35,11 +34,16 @@ const FeaturedBanners = ({ banners: initialBanners = null }) => {
     }
   };
 
+  // Mobile stays editorial/tall; desktop uses a wider ratio so dual banners sit shorter on laptops.
+  const tileClass =
+    'relative aspect-[4/5] md:aspect-[4/3] lg:aspect-[3/2] xl:aspect-[16/10] group overflow-hidden w-full bg-gray-100';
+
   if (loading) {
     return (
-      <section className="w-screen relative left-1/2 -translate-x-1/2 flex flex-col md:flex-row">
-        <div className="relative aspect-square md:h-[70vh] bg-gray-100 animate-pulse w-full md:flex-1 md:mr-2" />
-        <div className="relative aspect-square md:h-[70vh] bg-gray-100 animate-pulse w-full md:flex-1" />
+      <section className="w-full grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 px-0">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className={`${tileClass} animate-pulse`} />
+        ))}
       </section>
     );
   }
@@ -49,32 +53,31 @@ const FeaturedBanners = ({ banners: initialBanners = null }) => {
   }
 
   return (
-    <section className="w-screen relative left-1/2 -translate-x-1/2 flex flex-col md:flex-row">
+    <section className="w-full grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
       {banners.map((banner, index) => (
-        <div
-          key={banner._id || index}
-          className={`relative aspect-square md:h-[70vh] md:flex-1 group overflow-hidden w-full bg-gray-100 ${index === 0 ? 'md:mr-2' : ''}`}
-        >
+        <div key={banner._id || index} className={tileClass}>
           {banner.image ? (
             <OptimizedImage
               src={banner.image}
               alt={banner.title || `Featured Banner ${index + 1}`}
               fill
               sizePreset="half"
-              className="object-cover transition-transform duration-700 group-hover:scale-105"
+              className="object-cover object-center transition-transform duration-700 group-hover:scale-105"
               quality={75}
             />
           ) : (
             <div className="w-full h-full bg-gray-200" />
           )}
-          <div className="absolute inset-0 bg-black/20" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/5 to-transparent" />
           {banner.title && (
-            <div className="absolute bottom-12 left-0 right-0 text-center text-white px-4">
-              <h3 className="text-3xl font-serif mb-2">{banner.title}</h3>
+            <div className="absolute bottom-5 sm:bottom-7 md:bottom-8 left-0 right-0 text-center text-white px-4">
+              <h3 className="text-lg sm:text-xl md:text-2xl lg:text-[1.65rem] font-serif mb-1.5 drop-shadow-md">
+                {banner.title}
+              </h3>
               {banner.link ? (
                 <Link
                   href={banner.link}
-                  className="bg-black text-white px-6 py-2 text-xs uppercase tracking-widest hover:bg-gray-800 transition-colors inline-block mt-6"
+                  className="inline-flex min-h-10 md:min-h-11 items-center bg-black text-white px-5 md:px-6 py-2 text-[11px] sm:text-xs uppercase tracking-widest hover:bg-gray-800 transition-colors mt-3"
                 >
                   Shop Now
                 </Link>

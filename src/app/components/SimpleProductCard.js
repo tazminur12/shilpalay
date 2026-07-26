@@ -7,6 +7,8 @@ import { addToCart } from '@/lib/cart';
 import Swal from 'sweetalert2';
 
 const SimpleProductCard = ({ product, priority = false }) => {
+  const displayPrice = product.price?.salePrice || product.price?.regularPrice || 0;
+
   const handleAddToCart = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -73,12 +75,20 @@ const SimpleProductCard = ({ product, priority = false }) => {
         )}
 
         <button
-          className="absolute bottom-2 left-2 w-6 h-6 bg-gray-500/50 hover:bg-black text-white rounded-full flex items-center justify-center transition-colors z-10 shadow-sm"
+          className="absolute bottom-3 left-3 w-10 h-10 bg-black/75 hover:bg-black text-white rounded-full flex items-center justify-center transition-colors z-10 shadow-sm"
           aria-label="Add to cart"
           onClick={handleAddToCart}
         >
-          <Plus className="w-3.5 h-3.5" />
+          <Plus className="w-4 h-4" />
         </button>
+      </div>
+      <div className="pt-3">
+        <h3 className="text-sm font-medium text-gray-900 line-clamp-1 group-hover:underline underline-offset-4">
+          {product.name}
+        </h3>
+        <p className="mt-1 text-sm text-gray-600 tabular-nums">
+          Tk {Number(displayPrice).toLocaleString('en-BD')}
+        </p>
       </div>
     </Link>
   );

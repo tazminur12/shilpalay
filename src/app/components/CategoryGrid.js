@@ -36,9 +36,9 @@ const CategoryGrid = ({ categories: initialCategories = null }) => {
 
   if (loading) {
     return (
-      <section className="py-8 md:py-12 bg-white">
+      <section className="py-6 md:py-12 bg-white">
         <div className="max-w-[1920px] mx-auto px-4 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="aspect-[3/4] bg-gray-100 animate-pulse" />
             ))}
@@ -53,12 +53,12 @@ const CategoryGrid = ({ categories: initialCategories = null }) => {
   }
 
   return (
-    <section className="py-8 md:py-12 bg-white">
+    <section className="py-6 md:py-12 bg-white">
       <div className="max-w-[1920px] mx-auto px-4 lg:px-8">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-x-3 gap-y-6 sm:gap-4">
           {categories.map((cat) => (
             <Link key={cat._id} href={`/${cat.slug}`} className="group block">
-              <div className="relative aspect-[3/4] overflow-hidden mb-3 bg-gray-100">
+              <div className="relative aspect-[3/4] overflow-hidden mb-2.5 sm:mb-3 bg-gray-100">
                 {cat.image ? (
                   <OptimizedImage
                     src={cat.image}
@@ -74,7 +74,7 @@ const CategoryGrid = ({ categories: initialCategories = null }) => {
                   </div>
                 )}
               </div>
-              <h3 className="text-center text-xs md:text-sm font-medium uppercase tracking-wide text-gray-800 group-hover:text-black">
+              <h3 className="text-center text-[11px] sm:text-xs md:text-sm font-medium uppercase tracking-wide text-gray-800 group-hover:text-black line-clamp-2">
                 {cat.name}
               </h3>
             </Link>
