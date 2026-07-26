@@ -24,12 +24,20 @@ const SubCategorySchema = new mongoose.Schema({
     enum: ['Active', 'Inactive'],
     default: 'Active',
   },
+  sortOrder: {
+    type: Number,
+    default: 0,
+  },
 }, { timestamps: true });
 
-// Indexes for better query performance
-SubCategorySchema.index({ slug: 1 });
 SubCategorySchema.index({ category: 1 });
 SubCategorySchema.index({ status: 1 });
+SubCategorySchema.index({ sortOrder: 1 });
 SubCategorySchema.index({ category: 1, status: 1 });
+SubCategorySchema.index({ category: 1, sortOrder: 1 });
 
-export default mongoose.models.SubCategory || mongoose.model('SubCategory', SubCategorySchema);
+if (mongoose.models.SubCategory) {
+  delete mongoose.models.SubCategory;
+}
+
+export default mongoose.model('SubCategory', SubCategorySchema);

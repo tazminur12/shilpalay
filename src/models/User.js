@@ -31,25 +31,18 @@ const UserSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: [
-      'super_admin',
-      'admin',
-      'vendor',
-      'inventory_manager',
-      'order_staff',
-      'delivery',
-      'accounts',
-      'customer_support',
-      'qc',
-      'marketing_manager',
-      'customer'
-    ],
     default: 'customer',
+    trim: true,
+    lowercase: true,
   },
 }, { timestamps: true });
 
-// Indexes for better query performance
+// Indexes for better performance
 UserSchema.index({ role: 1 });
 UserSchema.index({ email: 1, role: 1 });
 
-export default mongoose.models.User || mongoose.model('User', UserSchema);
+if (mongoose.models.User) {
+  delete mongoose.models.User;
+}
+
+export default mongoose.model('User', UserSchema);

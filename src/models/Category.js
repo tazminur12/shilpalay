@@ -29,8 +29,7 @@ const CategorySchema = new mongoose.Schema({
   },
 }, { timestamps: true });
 
-// Indexes for better query performance
-CategorySchema.index({ slug: 1 });
+// Indexes for better query performance (slug unique comes from field unique: true)
 CategorySchema.index({ status: 1 });
 CategorySchema.index({ sortOrder: 1 });
 CategorySchema.index({ status: 1, sortOrder: 1 });

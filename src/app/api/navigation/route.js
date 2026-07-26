@@ -28,21 +28,27 @@ export async function GET() {
       .lean();
     
     // Fetch active subcategories
-    const subCategories = await SubCategory.find({ status: 'Active' }).lean();
+    const subCategories = await SubCategory.find({ status: 'Active' })
+      .sort({ sortOrder: 1, createdAt: 1 })
+      .lean();
     
     // Fetch active child categories
-    const childCategories = await ChildCategory.find({ status: 'Active' }).lean();
+    const childCategories = await ChildCategory.find({ status: 'Active' })
+      .sort({ sortOrder: 1, createdAt: 1 })
+      .lean();
 
     // Build navigation structure
     const navigation = categories.map(category => {
       const categoryId = category._id.toString();
       
       // Find subcategories for this category
-      const categorySubs = subCategories.filter(sub => {
-        if (!sub.category) return false;
-        const subCategoryId = sub.category.toString ? sub.category.toString() : sub.category;
-        return subCategoryId === categoryId;
-      });
+      const categorySubs = subCategories
+        .filter(sub => {
+          if (!sub.category) return false;
+          const subCategoryId = sub.category.toString ? sub.category.toString() : sub.category;
+          return subCategoryId === categoryId;
+        })
+        .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
 
       // Build sections with child categories
       const sections = categorySubs.map(sub => {
@@ -54,6 +60,7 @@ export async function GET() {
             const childSubId = child.subCategory.toString ? child.subCategory.toString() : child.subCategory;
             return childSubId === subId;
           })
+          .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
           .map(child => ({
             label: child.name,
             slug: child.slug || child.name.toLowerCase().replace(/\s+/g, '-')

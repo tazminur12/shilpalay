@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import Banner from '@/models/Banner';
 import mongoose from 'mongoose';
+import { revalidateStorefront } from '@/lib/revalidate';
 
 const VALID_POSITIONS = [
   'Homepage Hero',
@@ -101,6 +102,7 @@ export async function PUT(req, { params }) {
       return NextResponse.json({ message: 'Banner not found' }, { status: 404 });
     }
 
+    revalidateStorefront();
     return NextResponse.json(serializeBanner(banner));
   } catch (error) {
     console.error('Failed to update banner:', error);
@@ -127,6 +129,7 @@ export async function DELETE(req, { params }) {
       return NextResponse.json({ message: 'Banner not found' }, { status: 404 });
     }
 
+    revalidateStorefront();
     return NextResponse.json({ message: 'Banner deleted successfully' });
   } catch (error) {
     console.error('Failed to delete banner:', error);

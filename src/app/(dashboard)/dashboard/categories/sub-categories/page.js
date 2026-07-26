@@ -5,12 +5,21 @@ import { useState, useEffect, useRef } from 'react';
 import Swal from 'sweetalert2';
 import Image from 'next/image';
 
+async function readErrorMessage(res, fallback) {
+  try {
+    const data = await res.json();
+    return data.message || data.error || fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 export default function SubCategoryPage() {
   const [subCategories, setSubCategories] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [formData, setFormData] = useState({ name: '', category: '', slug: '', status: 'Active', image: '' });
+  const [formData, setFormData] = useState({ name: '', category: '', slug: '', status: 'Active', image: '', sortOrder: 0 });
   const [uploading, setUploading] = useState(false);
   const [imagePreview, setImagePreview] = useState('');
   const fileInputRef = useRef(null);
@@ -23,11 +32,14 @@ export default function SubCategoryPage() {
 
   const fetchSubCategories = async () => {
     try {
-      const res = await fetch('/api/sub-categories');
+      const res = await fetch('/api/sub-categories', { cache: 'no-store' });
+      if (!res.ok) throw new Error(await readErrorMessage(res, 'Failed to fetch sub-categories'));
       const data = await res.json();
-      setSubCategories(data);
+      setSubCategories(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching sub-categories:', error);
+      setSubCategories([]);
+      Swal.fire('Error', error.message || 'Failed to fetch sub-categories', 'error');
     } finally {
       setLoading(false);
     }
@@ -35,11 +47,13 @@ export default function SubCategoryPage() {
 
   const fetchCategories = async () => {
     try {
-      const res = await fetch('/api/categories');
+      const res = await fetch('/api/categories?admin=1', { cache: 'no-store' });
+      if (!res.ok) throw new Error(await readErrorMessage(res, 'Failed to fetch categories'));
       const data = await res.json();
-      setCategories(data);
+      setCategories(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching categories:', error);
+      setCategories([]);
     }
   };
 
@@ -61,7 +75,8 @@ export default function SubCategoryPage() {
         category: sub.category?._id || '',
         slug: sub.slug,
         status: sub.status,
-        image: sub.image || ''
+        image: sub.image || '',
+        sortOrder: sub.sortOrder || 0
     });
     setImagePreview(sub.image || '');
     setShowModal(true);
@@ -88,10 +103,10 @@ export default function SubCategoryPage() {
           Swal.fire('Deleted!', 'Sub-Category has been deleted.', 'success');
           fetchSubCategories();
         } else {
-          throw new Error('Failed to delete');
+          throw new Error(await readErrorMessage(res, 'Failed to delete'));
         }
       } catch (error) {
-        Swal.fire('Error', 'Failed to delete sub-category', 'error');
+        Swal.fire('Error', error.message || 'Failed to delete sub-category', 'error');
       }
     }
   };
@@ -105,17 +120,18 @@ export default function SubCategoryPage() {
       const res = await fetch(url, {
         method: method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          ...formData,
+          sortOrder: Number(formData.sortOrder) || 0,
+        })
       });
 
       if (res.ok) {
         Swal.fire('Success', `Sub-Category ${editingId ? 'updated' : 'created'} successfully`, 'success');
         fetchSubCategories();
-        setShowModal(false);
-        setFormData({ name: '', category: '', slug: '', status: 'Active' });
-        setEditingId(null);
+        closeModal();
       } else {
-        throw new Error(`Failed to ${editingId ? 'update' : 'create'} sub-category`);
+        throw new Error(await readErrorMessage(res, `Failed to ${editingId ? 'update' : 'create'} sub-category`));
       }
     } catch (error) {
       Swal.fire('Error', error.message, 'error');
@@ -174,7 +190,7 @@ export default function SubCategoryPage() {
 
   const closeModal = () => {
     setShowModal(false);
-    setFormData({ name: '', category: '', slug: '', status: 'Active', image: '' });
+    setFormData({ name: '', category: '', slug: '', status: 'Active', image: '', sortOrder: 0 });
     setImagePreview('');
     setEditingId(null);
     if (fileInputRef.current) {
@@ -190,7 +206,10 @@ export default function SubCategoryPage() {
           <p className="text-sm text-gray-500 mt-1">Manage product sub-categories</p>
         </div>
         <button 
-            onClick={() => setShowModal(true)}
+            onClick={() => {
+              closeModal();
+              setShowModal(true);
+            }}
             className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors"
         >
           <Plus className="w-4 h-4" />
@@ -294,17 +313,31 @@ export default function SubCategoryPage() {
                             </label>
                         </div>
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                        <select 
-                            name="status"
-                            value={formData.status}
-                            onChange={handleInputChange}
-                            className="w-full border border-gray-300 rounded-lg px-4 py-2 outline-none focus:border-black"
-                        >
-                            <option value="Active">Active</option>
-                            <option value="Inactive">Inactive</option>
-                        </select>
+                    <div className="grid grid-cols-2 gap-3">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Order</label>
+                            <input 
+                                type="number"
+                                name="sortOrder"
+                                min={0}
+                                value={formData.sortOrder}
+                                onChange={handleInputChange}
+                                className="w-full border border-gray-300 rounded-lg px-4 py-2 outline-none focus:border-black"
+                            />
+                            <p className="text-[11px] text-gray-400 mt-1">Lower number shows first</p>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                            <select 
+                                name="status"
+                                value={formData.status}
+                                onChange={handleInputChange}
+                                className="w-full border border-gray-300 rounded-lg px-4 py-2 outline-none focus:border-black"
+                            >
+                                <option value="Active">Active</option>
+                                <option value="Inactive">Inactive</option>
+                            </select>
+                        </div>
                     </div>
                     <button className="w-full bg-black text-white py-2 rounded-lg font-medium hover:bg-gray-800 transition-colors">
                         {editingId ? 'Update Sub Category' : 'Create Sub Category'}
@@ -334,13 +367,14 @@ export default function SubCategoryPage() {
                 <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Name</th>
                 <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Parent Category</th>
                 <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Slug</th>
+                <th className="text-center py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Order</th>
                 <th className="text-center py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
                 <th className="text-right py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {loading ? (
-                  <tr><td colSpan="6" className="text-center py-4">Loading...</td></tr>
+                  <tr><td colSpan="7" className="text-center py-4">Loading...</td></tr>
               ) : subCategories.map((sub) => (
                 <tr key={sub._id} className="hover:bg-gray-50 transition-colors">
                   <td className="py-4 px-6">
@@ -369,6 +403,9 @@ export default function SubCategoryPage() {
                   </td>
                   <td className="py-4 px-6 text-sm text-gray-500">
                     {sub.slug}
+                  </td>
+                  <td className="py-4 px-6 text-center">
+                    <span className="text-sm font-medium text-gray-700">{sub.sortOrder || 0}</span>
                   </td>
                   <td className="py-4 px-6 text-center">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${

@@ -20,12 +20,20 @@ const ChildCategorySchema = new mongoose.Schema({
     enum: ['Active', 'Inactive'],
     default: 'Active',
   },
+  sortOrder: {
+    type: Number,
+    default: 0,
+  },
 }, { timestamps: true });
 
-// Indexes for better query performance
-ChildCategorySchema.index({ slug: 1 });
 ChildCategorySchema.index({ subCategory: 1 });
 ChildCategorySchema.index({ status: 1 });
+ChildCategorySchema.index({ sortOrder: 1 });
 ChildCategorySchema.index({ subCategory: 1, status: 1 });
+ChildCategorySchema.index({ subCategory: 1, sortOrder: 1 });
 
-export default mongoose.models.ChildCategory || mongoose.model('ChildCategory', ChildCategorySchema);
+if (mongoose.models.ChildCategory) {
+  delete mongoose.models.ChildCategory;
+}
+
+export default mongoose.model('ChildCategory', ChildCategorySchema);

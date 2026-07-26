@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import Banner from '@/models/Banner';
 import mongoose from 'mongoose';
+import { revalidateStorefront } from '@/lib/revalidate';
 
 const VALID_POSITIONS = [
   'Homepage Hero',
@@ -146,6 +147,7 @@ export async function POST(req) {
       strictPopulate: false,
     });
 
+    revalidateStorefront();
     return NextResponse.json(serializeBanner(savedBanner), { status: 201 });
   } catch (error) {
     console.error('Failed to create banner:', error);

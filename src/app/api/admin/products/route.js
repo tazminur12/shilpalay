@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import Product from '@/models/Product';
 import mongoose from 'mongoose';
+import { revalidateStorefront } from '@/lib/revalidate';
 
 export async function GET(req) {
   try {
@@ -287,6 +288,7 @@ export async function POST(req) {
     await product.populate('subCategory', 'name slug');
     await product.populate('childCategory', 'name slug');
 
+    revalidateStorefront();
     return NextResponse.json(product, { status: 201 });
   } catch (error) {
     console.error('Product creation error:', error);

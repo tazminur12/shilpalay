@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import Product from '@/models/Product';
 import mongoose from 'mongoose';
+import { revalidateStorefront } from '@/lib/revalidate';
 
 export async function GET(req, { params }) {
   try {
@@ -240,6 +241,7 @@ export async function PUT(req, { params }) {
       );
     }
 
+    revalidateStorefront();
     return NextResponse.json(product);
   } catch (error) {
     console.error('Product update error:', error);
@@ -281,6 +283,7 @@ export async function DELETE(req, { params }) {
       );
     }
 
+    revalidateStorefront();
     return NextResponse.json({ message: 'Product deleted successfully' });
   } catch (error) {
     return NextResponse.json(

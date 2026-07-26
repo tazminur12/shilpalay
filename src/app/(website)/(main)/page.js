@@ -8,6 +8,10 @@ import OfferBanner from "../../components/OfferBanner";
 import FeaturedBanners from "../../components/FeaturedBanners";
 import { getHomepageData, filterBannersByPosition } from "@/lib/homepageData";
 
+// CMS-driven page: always fetch fresh Mongo data on Vercel (local next dev already does).
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function Home() {
   const { banners, categories, whatsNewProducts } = await getHomepageData();
 

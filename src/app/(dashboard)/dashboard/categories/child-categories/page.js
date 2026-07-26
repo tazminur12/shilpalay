@@ -4,12 +4,21 @@ import { Plus, Edit, Trash2, Search, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
 
+async function readErrorMessage(res, fallback) {
+  try {
+    const data = await res.json();
+    return data.message || data.error || fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 export default function ChildCategoryPage() {
   const [childCategories, setChildCategories] = useState([]);
   const [subCategories, setSubCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [formData, setFormData] = useState({ name: '', subCategory: '', slug: '', status: 'Active' });
+  const [formData, setFormData] = useState({ name: '', subCategory: '', slug: '', status: 'Active', sortOrder: 0 });
   const [editingId, setEditingId] = useState(null);
 
   useEffect(() => {
@@ -19,11 +28,14 @@ export default function ChildCategoryPage() {
 
   const fetchChildCategories = async () => {
     try {
-      const res = await fetch('/api/child-categories');
+      const res = await fetch('/api/child-categories', { cache: 'no-store' });
+      if (!res.ok) throw new Error(await readErrorMessage(res, 'Failed to fetch child categories'));
       const data = await res.json();
-      setChildCategories(data);
+      setChildCategories(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching child categories:', error);
+      setChildCategories([]);
+      Swal.fire('Error', error.message || 'Failed to fetch child categories', 'error');
     } finally {
       setLoading(false);
     }
@@ -31,11 +43,13 @@ export default function ChildCategoryPage() {
 
   const fetchSubCategories = async () => {
     try {
-      const res = await fetch('/api/sub-categories');
+      const res = await fetch('/api/sub-categories', { cache: 'no-store' });
+      if (!res.ok) throw new Error(await readErrorMessage(res, 'Failed to fetch sub-categories'));
       const data = await res.json();
-      setSubCategories(data);
+      setSubCategories(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching sub-categories:', error);
+      setSubCategories([]);
     }
   };
 
@@ -56,7 +70,8 @@ export default function ChildCategoryPage() {
         name: child.name,
         subCategory: child.subCategory?._id || '',
         slug: child.slug,
-        status: child.status
+        status: child.status,
+        sortOrder: child.sortOrder || 0
     });
     setShowModal(true);
   };
@@ -82,10 +97,10 @@ export default function ChildCategoryPage() {
           Swal.fire('Deleted!', 'Child Category has been deleted.', 'success');
           fetchChildCategories();
         } else {
-          throw new Error('Failed to delete');
+          throw new Error(await readErrorMessage(res, 'Failed to delete'));
         }
       } catch (error) {
-        Swal.fire('Error', 'Failed to delete child category', 'error');
+        Swal.fire('Error', error.message || 'Failed to delete child category', 'error');
       }
     }
   };
@@ -99,17 +114,18 @@ export default function ChildCategoryPage() {
       const res = await fetch(url, {
         method: method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          ...formData,
+          sortOrder: Number(formData.sortOrder) || 0,
+        })
       });
 
       if (res.ok) {
         Swal.fire('Success', `Child Category ${editingId ? 'updated' : 'created'} successfully`, 'success');
         fetchChildCategories();
-        setShowModal(false);
-        setFormData({ name: '', subCategory: '', slug: '', status: 'Active' });
-        setEditingId(null);
+        closeModal();
       } else {
-        throw new Error(`Failed to ${editingId ? 'update' : 'create'} child category`);
+        throw new Error(await readErrorMessage(res, `Failed to ${editingId ? 'update' : 'create'} child category`));
       }
     } catch (error) {
       Swal.fire('Error', error.message, 'error');
@@ -118,7 +134,7 @@ export default function ChildCategoryPage() {
 
   const closeModal = () => {
     setShowModal(false);
-    setFormData({ name: '', subCategory: '', slug: '', status: 'Active' });
+    setFormData({ name: '', subCategory: '', slug: '', status: 'Active', sortOrder: 0 });
     setEditingId(null);
   };
 
@@ -130,7 +146,10 @@ export default function ChildCategoryPage() {
           <p className="text-sm text-gray-500 mt-1">Manage product child categories (items)</p>
         </div>
         <button 
-            onClick={() => setShowModal(true)}
+            onClick={() => {
+              closeModal();
+              setShowModal(true);
+            }}
             className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors"
         >
           <Plus className="w-4 h-4" />
@@ -185,17 +204,31 @@ export default function ChildCategoryPage() {
                             className="w-full border border-gray-300 rounded-lg px-4 py-2 outline-none focus:border-black bg-gray-50"
                         />
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                        <select 
-                            name="status"
-                            value={formData.status}
-                            onChange={handleInputChange}
-                            className="w-full border border-gray-300 rounded-lg px-4 py-2 outline-none focus:border-black"
-                        >
-                            <option value="Active">Active</option>
-                            <option value="Inactive">Inactive</option>
-                        </select>
+                    <div className="grid grid-cols-2 gap-3">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Order</label>
+                            <input 
+                                type="number"
+                                name="sortOrder"
+                                min={0}
+                                value={formData.sortOrder}
+                                onChange={handleInputChange}
+                                className="w-full border border-gray-300 rounded-lg px-4 py-2 outline-none focus:border-black"
+                            />
+                            <p className="text-[11px] text-gray-400 mt-1">Lower number shows first</p>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                            <select 
+                                name="status"
+                                value={formData.status}
+                                onChange={handleInputChange}
+                                className="w-full border border-gray-300 rounded-lg px-4 py-2 outline-none focus:border-black"
+                            >
+                                <option value="Active">Active</option>
+                                <option value="Inactive">Inactive</option>
+                            </select>
+                        </div>
                     </div>
                     <button className="w-full bg-black text-white py-2 rounded-lg font-medium hover:bg-gray-800 transition-colors">
                         {editingId ? 'Update Child Category' : 'Create Child Category'}
@@ -224,13 +257,14 @@ export default function ChildCategoryPage() {
                 <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Name</th>
                 <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Sub Category</th>
                 <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Slug</th>
+                <th className="text-center py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Order</th>
                 <th className="text-center py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
                 <th className="text-right py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {loading ? (
-                  <tr><td colSpan="5" className="text-center py-4">Loading...</td></tr>
+                  <tr><td colSpan="6" className="text-center py-4">Loading...</td></tr>
               ) : childCategories.map((child) => (
                 <tr key={child._id} className="hover:bg-gray-50 transition-colors">
                   <td className="py-4 px-6">
@@ -243,6 +277,9 @@ export default function ChildCategoryPage() {
                   </td>
                   <td className="py-4 px-6 text-sm text-gray-500">
                     {child.slug}
+                  </td>
+                  <td className="py-4 px-6 text-center">
+                    <span className="text-sm font-medium text-gray-700">{child.sortOrder || 0}</span>
                   </td>
                   <td className="py-4 px-6 text-center">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
